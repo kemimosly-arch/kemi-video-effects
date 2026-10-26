@@ -2,3 +2,4 @@ numpy
 opencv-python
 pillow
 mediapipe
+faster-whisper

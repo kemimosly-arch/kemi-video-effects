@@ -92,9 +92,67 @@ A single effect needs no plan: `.venv/bin/python scripts/fx.py orbit <video> <ou
 
 Aliases work too: `bill`, `to-do`, `follow`, `stamp`, `countdown`, `cover`, `rain`, `pause`.
 
+## 5. Captions (auto-caption your video)
+
+Run `.venv/bin/python scripts/captions.py <video> <output.mp4> --style <style>`.
+
+Styles: `word-pop` (one big word at a time), `highlight` (sentence with current word highlighted), `karaoke` (fills in word-by-word), `clean` (simple subtitle), `bold-stack` (two-line uppercase Instagram style).
+
+Options: `--color` (accent color name or hex), `--font` (path to .ttf), `--position top/center/bottom`, `--max-words` (words per sentence group), `--srt-in` (use existing SRT), `--srt-out` (export SRT).
+
+Example: `.venv/bin/python scripts/captions.py video.mp4 captioned.mp4 --style highlight --color purple --position bottom`
+
+## 6. Cuts (remove dead space)
+
+Run `.venv/bin/python scripts/cuts.py <command> <video> <output.mp4>`.
+
+Commands:
+- `cut-silence` — detect and remove silent gaps. Options: `--threshold` (dB, default -30), `--min-silence` (seconds, default 0.5), `--padding` (seconds, default 0.05).
+- `jump-cut` — aggressive mode, removes all pauses > max_gap. Options: `--max-gap` (seconds, default 0.25).
+- `trim` — simple start/end trim. Options: `--start`, `--end` (seconds).
+
+Example: `.venv/bin/python scripts/cuts.py cut-silence video.mp4 cut.mp4 --threshold -35 --min-silence 0.4`
+
+## 7. B-roll (insert B-roll clips)
+
+Run `.venv/bin/python scripts/broll.py <mode> <video> <output.mp4> --broll <clip> --at <seconds> --duration <seconds>`.
+
+Modes:
+- `cutaway` — full-screen B-roll with fade transition.
+- `pip` — picture-in-picture in a corner. Options: `--corner tl/tr/bl/br`, `--pip-scale` (default 0.35).
+- `split` — top/bottom or left/right split screen. Options: `--orientation tb/lr`.
+- `overlay` — B-roll blended into background behind person.
+
+For multiple B-rolls, use `--plan broll.json` with a JSON array of insertions.
+
+Supports video and image B-roll sources (images repeat as static, videos loop if shorter).
+
+## 8. Color Grading (12 presets)
+
+Run `.venv/bin/python scripts/grade.py <preset> <video> <output.mp4>`.
+
+Presets: `moody`, `warm`, `cool`, `film`, `pop`, `bw`, `vintage`, `cinematic`, `sunset`, `editorial`, `neon`, `pastel`.
+
+Options: `--strength` (0-1, default 1.0), `--grain` (film grain, try 0.02), `--vignette` (darkened edges, try 0.3), `--letterbox` (cinemascope bars, e.g. 2.35).
+
+Example: `.venv/bin/python scripts/grade.py cinematic video.mp4 graded.mp4 --strength 0.8 --grain 0.02 --vignette 0.3`
+
+Use `--list` to see all available grades.
+
+## 9. Speed Ramps (slow-mo, speed up, timelapse)
+
+Run `.venv/bin/python scripts/speed.py <command> <video> <output.mp4>`.
+
+Commands:
+- `ramp` — smooth speed change at a moment. Options: `--at` (center second), `--duration`, `--speed` (0.3 = slow-mo, 2.0 = fast). Use `--plan speed.json` for multiple ramps.
+- `slow-mo` — slow down a section. Options: `--start`, `--end`, `--speed` (default 0.4).
+- `speed-up` — speed up a section. Options: `--start`, `--end`, `--speed` (default 2.0).
+- `timelapse` — speed up the entire video. Options: `--speed` (default 4.0).
+
+Example: `.venv/bin/python scripts/speed.py slow-mo video.mp4 slowmo.mp4 --start 2.0 --end 4.0 --speed 0.3`
+
 ## Rules
 - Never cover the face. Everything either goes behind the person or avoids the face by itself; if a check frame still shows text over the face, move it (`x`, `y`) or shorten the text.
 - Effects run in the order listed. Put camera effects (`locked-on`, `lean-in`, `spotlight`) first when they overlap others.
 - Zoom never goes past 2x, so the video stays sharp.
-- This skill adds visuals only. Sound effects and captions are up to the user (CapCut works well).
 - These are starter versions. Be honest about that if the user compares them to a reel they saw.

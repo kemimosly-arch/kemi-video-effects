@@ -1,6 +1,6 @@
-# 42 Video Effects for Claude
+# Video Effects & Editing Toolkit for Claude
 
-Drop your video into Claude, type `/effects` and the name of an effect. That's the whole edit.
+42 visual effects + auto-captions + dead-space cutting + B-roll insertion + color grading + speed ramps. Drop your video into Claude and tell it what you want.
 
 Made by [@kemifrank__](https://instagram.com/kemifrank__) 💜
 
@@ -97,9 +97,103 @@ Every effect follows your face. Anything that would cover your face goes behind 
 - Charts, counters and headlines should use your real numbers. Tell Claude what they are.
 - It renders in 1080p. Ask for 4K if you want it (slower).
 
+---
+
+## Auto-Captions
+
+Add captions to your video with one command. 5 styles for different vibes.
+
+```
+python scripts/captions.py video.mp4 captioned.mp4 --style highlight --color purple
+```
+
+| Style | What it looks like |
+|---|---|
+| `word-pop` | One big word at a time, centered, with pop animation |
+| `highlight` | Full sentence with current word highlighted in accent color |
+| `karaoke` | Sentence fills in word-by-word, colored left-to-right |
+| `clean` | Simple one-line subtitle at bottom |
+| `bold-stack` | Two-line uppercase, punchy Instagram style |
+
+Options: `--color`, `--font`, `--position top/center/bottom`, `--srt-in` (use existing SRT), `--srt-out` (export SRT).
+
+---
+
+## Dead-Space Cutting
+
+Remove awkward pauses and silence from your talking videos.
+
+```
+python scripts/cuts.py cut-silence video.mp4 clean.mp4
+python scripts/cuts.py jump-cut video.mp4 punchy.mp4 --max-gap 0.25
+python scripts/cuts.py trim video.mp4 clip.mp4 --start 2.5 --end 10.0
+```
+
+| Command | What it does |
+|---|---|
+| `cut-silence` | Detects and removes silent gaps |
+| `jump-cut` | Aggressive mode — removes all pauses for a punchy edit |
+| `trim` | Simple start/end trim |
+
+---
+
+## B-Roll Insertion
+
+Insert B-roll clips into your talking-head videos with transitions.
+
+```
+python scripts/broll.py pip main.mp4 output.mp4 --broll demo.mp4 --at 5.0 --duration 3.0 --corner br
+```
+
+| Mode | What it does |
+|---|---|
+| `cutaway` | Full-screen B-roll with fade transition |
+| `pip` | Picture-in-picture in a corner |
+| `split` | Top/bottom or left/right split screen |
+| `overlay` | B-roll blended into background behind you |
+
+Supports video and image B-roll. Use `--plan broll.json` for multiple insertions.
+
+---
+
+## Color Grading (12 Presets)
+
+Apply a color grade to your whole video with one command.
+
+```
+python scripts/grade.py cinematic video.mp4 graded.mp4 --strength 0.8 --grain 0.02
+```
+
+Presets: `moody` · `warm` · `cool` · `film` · `pop` · `bw` · `vintage` · `cinematic` · `sunset` · `editorial` · `neon` · `pastel`
+
+Extras: `--grain` (film grain), `--vignette` (darkened edges), `--letterbox` (cinemascope bars).
+
+---
+
+## Speed Ramps
+
+Slow-mo, speed up, or timelapse any section of your video.
+
+```
+python scripts/speed.py slow-mo video.mp4 slowmo.mp4 --start 2.0 --end 4.0 --speed 0.3
+python scripts/speed.py speed-up video.mp4 fast.mp4 --start 5.0 --end 8.0 --speed 2.5
+python scripts/speed.py timelapse video.mp4 timelapse.mp4 --speed 4.0
+python scripts/speed.py ramp video.mp4 output.mp4 --at 3.0 --duration 2.0 --speed 0.4
+```
+
+| Command | What it does |
+|---|---|
+| `ramp` | Smooth speed change at a specific moment |
+| `slow-mo` | Slow down a section |
+| `speed-up` | Speed up a section |
+| `timelapse` | Speed up the entire video |
+
+Use `--plan speed.json` for multiple speed ramps in one render.
+
+---
+
 ## Honest notes
 - These are **starter versions**. They draft, you approve. Watch the result before you post.
-- No sounds or captions are added. Add those in CapCut.
 - For more AI content tips, follow [@kemifrank__](https://instagram.com/kemifrank__) or visit [ikemesitaliozor.com](https://ikemesitaliozor.com).
 
 ## If something goes wrong
