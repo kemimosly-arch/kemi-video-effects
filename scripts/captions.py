@@ -74,7 +74,10 @@ def transcribe(src):
         from faster_whisper import WhisperModel
 
     model = WhisperModel(os.environ.get('WHISPER_MODEL', 'base'), device='cpu', compute_type='int8')
-    segs, info = model.transcribe(src, word_timestamps=True, vad_filter=True)
+    pcm = subprocess.run(['ffmpeg', '-v', 'error', '-i', src, '-ac', '1', '-ar', '16000', '-f', 's16le', '-'],
+                         capture_output=True).stdout
+    audio = np.frombuffer(pcm, np.int16).astype(np.float32) / 32768
+    segs, info = model.transcribe(audio, word_timestamps=True, vad_filter=True)
     for s in segs:
         for w in (s.words or []):
             words.append({'w': w.word.strip(), 's': round(w.start, 2), 'e': round(w.end, 2)})
@@ -358,7 +361,227 @@ def render_bold_stack(t, W, H, words, groups, accent, font_kind, position):
     return im
 
 
+# ─── editorial: the house style (by @kemifrank__) ───
+# lowercase white sans, the key word in a pale-yellow italic serif on its own line,
+# sitting above your head so your head passes in front of the words.
+STOP = set("""a an the and or but so to of in on at for with from by as is are was were be been being it its it's this that
+these those i i'm im you you're your we we're our they their he she his her him them me my mine yours ours
+do does did done have has had will would can could should just like really very not no yes if then than when what how
+which who why where there here about into out up down over under again also only even more most some any all each
+let's lets gonna wanna get got go going um uh okay ok oh yeah""".split())
+
+EDITORIAL_YELLOW = (248, 232, 142)
+SANS_WGHT = 690
+
+def _sans(size):
+    k = ('sans', int(size))
+    if k not in _fc:
+        f = ImageFont.truetype(FONT['ui'], max(8, int(size)))
+        try: f.set_variation_by_axes([32, SANS_WGHT])
+        except Exception:
+            try: f.set_variation_by_axes([SANS_WGHT])
+            except Exception: pass
+        _fc[k] = f
+    return _fc[k]
+
+def _clean(w):
+    return w.strip().strip('.,!?;:"“”').lower()
+
+WEAK = set("""here's there's that's what's having using show works work click copy send spend want make take help
+tell talk talking first next time thing things stuff way need know think say said look see come give gives use""".split())
+
+def pick_emphasis(group, manual=None, prev=False):
+    """(first, last) word indexes to set in yellow serif, or None.
+    Used sparingly, like the reference reels: the punchline, a name, a number.
+    manual: set of lowercase words the user wants emphasised (always win)."""
+    def span(i):
+        # a number takes its unit with it: "60 seconds", "1 million"
+        if any(ch.isdigit() for ch in group[i]['w']) and i + 1 < len(group) and _clean(group[i + 1]['w']) not in STOP:
+            return (i, i + 1)
+        return (i, i)
+    if manual:
+        hits = [i for i, w in enumerate(group) if _clean(w['w']) in manual]
+        if hits: return span(hits[-1])
+    best, score = None, 0.0
+    for i, w in enumerate(group):
+        raw = w['w'].strip(); c = _clean(raw)
+        if not c or c in STOP or c in WEAK: continue
+        sc = len(c) * (0.6 if len(c) >= 5 else 0.3)
+        if any(ch.isdigit() for ch in c): sc += 6
+        if raw[:1].isupper() and i > 0: sc += 3          # names, brands
+        if raw[-1:] in '.!?': sc += 1.5                   # punchline at the end of a thought
+        if i == len(group) - 1: sc += 0.8
+        if sc > score: best, score = i, sc
+    need = 6.5 if prev else 4.8                            # don't stack serif words back to back
+    return span(best) if best is not None and score >= need else None
+
+def editorial_groups(words, max_words=5, gap=0.35):
+    groups, cur = [], []
+    for w in words:
+        if cur and (w['s'] - cur[-1]['e'] > gap or len(cur) >= max_words or cur[-1]['w'].strip()[-1:] in '.,!?;:'):
+            groups.append(cur); cur = []
+        cur.append(w)
+    if cur: groups.append(cur)
+    return groups
+
+def _wrap(words, f, maxw, space):
+    lines, cur, cw = [], [], 0
+    for w in words:
+        ww = f.getlength(w)
+        if cur and cw + space + ww > maxw: lines.append(cur); cur, cw = [], 0
+        cw = cw + (space if cur else 0) + ww; cur.append(w)
+    if cur: lines.append(cur)
+    return lines
+
+def _tracked_width(s, f, tr): return sum(f.getlength(ch) for ch in s) + tr * max(0, len(s) - 1)
+
+def editorial_layout(group, emph, W, size=None):
+    """Lines of (text, kind, word_indexes). kind: 'sans' or 'serif'."""
+    words = [w['w'].strip().strip('“”"') for w in group]
+    words = [w.rstrip(',;:') for w in words]
+    S = size or int(W * 0.118)
+    while True:
+        fs, fz = _sans(S), _font('serif', S * 1.5)
+        tr = -S * 0.035; sp = fs.getlength(' ') * 0.85
+        blocks = []
+        if emph is None: blocks.append(('sans', list(range(len(words)))))
+        else:
+            e0, e1 = emph
+            if e0 > 0: blocks.append(('sans', list(range(e0))))
+            blocks.append(('serif', list(range(e0, e1 + 1))))
+            if e1 < len(words) - 1: blocks.append(('sans', list(range(e1 + 1, len(words)))))
+        lines, ok = [], True
+        for kind, idx in blocks:
+            f = fs if kind == 'sans' else fz
+            toks = [words[i].lower() if kind == 'sans' else words[i].lower().rstrip('.!?') for i in idx]
+            items = [(j, tk, _tracked_width(tk, f, tr) if kind == 'sans' else f.getlength(tk)) for j, tk in zip(idx, toks)]
+            if any(ww > W * 0.9 for _, _, ww in items): ok = False
+            width = lambda its: sum(ww for _, _, ww in its) + sp * max(0, len(its) - 1)
+            if width(items) <= W * 0.88 or len(items) == 1:
+                lines.append((kind, items))
+            else:
+                # balanced two-line split: no lonely last word hiding behind your head
+                best = min(range(1, len(items)), key=lambda c: max(width(items[:c]), width(items[c:])))
+                if max(width(items[:best]), width(items[best:])) > W * 0.88: ok = False
+                lines.append((kind, items[:best])); lines.append((kind, items[best:]))
+        if ok or S < 50: return lines, S, sp, tr
+        S = int(S * 0.88)
+
+def render_editorial_layer(t, W, H, group, emph, anchor_y, size=None, color=EDITORIAL_YELLOW):
+    """RGBA text layer. anchor_y = y of the bottom of the text block."""
+    lines, S, sp, tr = editorial_layout(group, emph, W, size)
+    fs, fz = _sans(S), _font('serif', S * 1.5)
+    heights = [S * 1.02 if k == 'sans' else S * 1.32 for k, _ in lines]
+    y = max(H * 0.04, anchor_y - sum(heights))   # never off the top of the frame
+    im = Image.new('RGBA', (W, H), (0, 0, 0, 0)); d = ImageDraw.Draw(im)
+    for (kind, toks), lh in zip(lines, heights):
+        f = fs if kind == 'sans' else fz
+        tot = sum(ww for _, _, ww in toks) + sp * (len(toks) - 1)
+        x = (W - tot) / 2
+        for j, tk, ww in toks:
+            w = group[j]
+            k = min(1.0, max(0.0, (t - w['s'] + 0.04) / 0.14))      # each word arrives as it's spoken
+            if k > 0:
+                a = int(255 * k); dy = (1 - k) * S * 0.18
+                if kind == 'sans':
+                    cx = x
+                    for ch in tk:
+                        d.text((cx, y + dy), ch, font=f, fill=(255, 255, 255, a)); cx += f.getlength(ch) + tr
+                else:
+                    d.text((x, y + dy - S * 0.08), tk, font=f, fill=color + (a,))
+            x += ww + sp
+        y += lh
+    # soft shadow for legibility on any background
+    al = np.asarray(im)[..., 3]
+    sh = Image.fromarray((al * 0.55).astype(np.uint8)).filter(ImageFilter.GaussianBlur(max(4, S * 0.09)))
+    out = Image.new('RGBA', (W, H), (0, 0, 0, 0))
+    out.paste((0, 0, 0, 255), (0, int(S * 0.04)), sh)
+    out.alpha_composite(im)
+    return out
+
+# effects that draw above your head (captions drop to the bottom while they play)
+# and effects that live under your chin (captions keep their spot above your head)
+_BELOW_FX = {'checklist', 'liquid-glass-graph'}
+
+def caption_zones(fx_plan_path, bottom_at):
+    zones = []   # (start, end, 'bottom'|'head')
+    if fx_plan_path:
+        plan = json.load(open(fx_plan_path))
+        for e in plan.get('effects', []):
+            name = e['fx']
+            if name in _BELOW_FX and e.get('look') != 'bento': continue
+            if name == 'apple-toggles' and e.get('pos') == 'below': continue
+            zones.append((float(e['start']) - 0.1, float(e['end']) + 0.1, 'bottom'))
+    for rng in (bottom_at or '').split(','):
+        if '-' in rng:
+            a_, b_ = rng.split('-'); zones.append((float(a_), float(b_), 'bottom'))
+    return zones
+
+def run_editorial(a, words):
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    from fx import Tracker   # same face + person tracking the effects use
+    src = a.input
+    fps, dur, sw, sh = probe(src)
+    if sw <= sh: W = a.width; H = int(round(a.width * sh / sw / 2)) * 2
+    else: H = a.width; W = int(round(a.width * sw / sh / 2)) * 2
+    manual = set(x.strip().lower() for x in (a.emphasis or '').split(',') if x.strip())
+    color = parse_color(a.color, EDITORIAL_YELLOW) if a.color != 'purple' else EDITORIAL_YELLOW
+    groups = editorial_groups(words, max_words=min(a.max_words, 5))
+    emph = []
+    for g in groups: emph.append(pick_emphasis(g, manual, prev=bool(emph and emph[-1])))
+    zones = caption_zones(a.fx_plan, a.bottom_at)
+    aw = 360; ah = int(round(aw * H / W / 2)) * 2
+    tr = Tracker(aw, ah); face_s = None; locked = {}
+
+    enc = subprocess.Popen([
+        'ffmpeg', '-v', 'error', '-y',
+        '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-s', f'{W}x{H}', '-r', str(fps), '-i', '-',
+        '-i', src, '-map', '0:v', '-map', '1:a:0?',
+        '-c:v', 'libx264', '-crf', '17', '-preset', 'medium', '-pix_fmt', 'yuv420p',
+        '-c:a', 'aac', '-b:a', '192k', '-shortest', '-movflags', '+faststart', a.output
+    ], stdin=subprocess.PIPE)
+    print('Rendering editorial captions...', flush=True)
+    for i, frame in enumerate(read_frames(src, W, H, fps)):
+        t = i / fps
+        small = cv2.resize(frame, (aw, ah), interpolation=cv2.INTER_AREA)
+        m, face = tr(small, int(t * 1000))
+        if face is not None:
+            fx_, fy_, fw_ = face[0] * W / aw, face[1] * H / ah, face[2] * W / aw
+            face_s = (fx_, fy_, fw_) if face_s is None else tuple(0.85 * p + 0.15 * q for p, q in zip(face_s, (fx_, fy_, fw_)))
+        gi = None
+        for k, g in enumerate(groups):
+            nxt = groups[k + 1][0]['s'] if k + 1 < len(groups) else g[-1]['e'] + 0.6
+            if g[0]['s'] - 0.05 <= t < min(nxt, g[-1]['e'] + 0.6): gi = k; break
+        out = frame
+        if gi is not None:
+            zone = 'head'
+            for z0, z1, zn in zones:
+                if z0 <= t <= z1: zone = zn
+            if a.position in ('bottom', 'top', 'center'): zone = a.position
+            key = (gi, zone)
+            if key not in locked:      # text stays put for the whole phrase
+                if zone == 'head' and face_s is not None:
+                    fx_, fy_, fw_ = face_s
+                    locked[key] = min(H * 0.6, max(H * 0.17, fy_ - fw_ * 0.98))
+                elif zone == 'head': locked[key] = H * 0.36
+                elif zone == 'top': locked[key] = H * 0.26
+                elif zone == 'center': locked[key] = H * 0.5
+                else: locked[key] = H * 0.9
+            lay = render_editorial_layer(t, W, H, groups[gi], emph[gi], locked[key], color=color)
+            ov = np.asarray(lay, np.float32) / 255; al = ov[..., 3:4]
+            if zone == 'head' and not a.no_behind:
+                mk = cv2.resize(m, (W, H), interpolation=cv2.INTER_LINEAR).astype(np.float32) / 255
+                al = al * (1 - mk[..., None])
+            base = frame.astype(np.float32) / 255
+            out = (np.clip(base * (1 - al) + ov[..., :3] * al, 0, 1) * 255 + 0.5).astype(np.uint8)
+        enc.stdin.write(out.tobytes())
+        if i % int(fps * 5) == 0: print(f'  {t:5.1f}s / {dur:.1f}s', flush=True)
+    enc.stdin.close(); enc.wait()
+    print(f'Done: {a.output}')
+
+
 STYLES = {
+    'editorial': None,
     'word-pop': render_word_pop,
     'highlight': render_highlight,
     'karaoke': render_karaoke,
@@ -397,12 +620,18 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('input', help='Input video')
     ap.add_argument('output', help='Output video (or .srt to export subtitles only)')
-    ap.add_argument('--style', default='highlight', choices=list(STYLES.keys()),
-                    help='Caption style (default: highlight)')
+    ap.add_argument('--style', default='editorial', choices=list(STYLES.keys()),
+                    help='Caption style (default: editorial, the house style)')
     ap.add_argument('--color', default='purple', help='Accent color: name or hex (default: purple)')
     ap.add_argument('--font', default='bold', help='Font: bold, anton, mono, hand, ui (default: bold)')
-    ap.add_argument('--position', default='bottom', choices=['top', 'center', 'bottom'],
-                    help='Where to place captions (default: bottom)')
+    ap.add_argument('--position', default=None, choices=['head', 'top', 'center', 'bottom'],
+                    help='Where to place captions (editorial default: above your head; others: bottom)')
+    ap.add_argument('--words', help='Use a words JSON from words.py (fix any misheard words in it first)')
+    ap.add_argument('--fix', help='Fix misheard words, e.g. "ChargeGPT=ChatGPT,serve=save"')
+    ap.add_argument('--emphasis', help='editorial: words to set in yellow serif, e.g. "claude,edited"')
+    ap.add_argument('--fx-plan', help='editorial: the fx.py plan, so captions move out of the way of effects')
+    ap.add_argument('--bottom-at', help='editorial: extra time ranges for bottom captions, e.g. "19-21.6,39.6-43"')
+    ap.add_argument('--no-behind', action='store_true', help='editorial: keep words in front of your head')
     ap.add_argument('--srt', help='Use an existing SRT file instead of transcribing')
     ap.add_argument('--max-words', type=int, default=6, help='Max words per caption group (default: 6)')
     ap.add_argument('--export-srt', action='store_true', help='Also save an SRT file alongside the video')
@@ -414,7 +643,9 @@ def main():
     render_fn = STYLES[a.style]
 
     # Get words
-    if a.srt:
+    if a.words:
+        words = json.load(open(a.words))
+    elif a.srt:
         print(f'Loading subtitles from {a.srt}...', flush=True)
         words = load_srt(a.srt)
     else:
@@ -425,7 +656,18 @@ def main():
         print('No speech detected in the video.')
         return
 
+    if a.fix:
+        for pair in a.fix.split(','):
+            if '=' in pair:
+                old, new = pair.split('=', 1)
+                for w in words: w['w'] = w['w'].replace(old.strip(), new.strip())
     print(f'Found {len(words)} words.', flush=True)
+    if a.style == 'editorial':
+        if a.position is None: a.position = 'head'
+        if a.output.lower().endswith('.srt'):
+            _export_srt(a.output, editorial_groups(words)); print(f'Saved {a.output}'); return
+        return run_editorial(a, words)
+    if a.position in (None, 'head'): a.position = 'bottom'
     groups = group_sentences(words, max_words=a.max_words)
 
     # Export SRT only?

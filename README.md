@@ -1,6 +1,6 @@
 # Video Effects & Editing Toolkit for Claude
 
-42 visual effects + auto-captions + dead-space cutting + B-roll insertion + color grading + speed ramps. Drop your video into Claude and tell it what you want.
+42 visual effects + house-style captions + sound effects + dead-space cutting + B-roll insertion + color grading + speed ramps. Drop your video into Claude and tell it what you want.
 
 Made by [@kemifrank__](https://instagram.com/kemifrank__) 💜
 
@@ -99,23 +99,35 @@ Every effect follows your face. Anything that would cover your face goes behind 
 
 ---
 
-## Auto-Captions
-
-Add captions to your video with one command. 5 styles for different vibes.
+## Captions (house style)
 
 ```
-python scripts/captions.py video.mp4 captioned.mp4 --style highlight --color purple
+python scripts/captions.py video.mp4 captioned.mp4 --words video.words.json
 ```
 
-| Style | What it looks like |
-|---|---|
-| `word-pop` | One big word at a time, centered, with pop animation |
-| `highlight` | Full sentence with current word highlighted in accent color |
-| `karaoke` | Sentence fills in word-by-word, colored left-to-right |
-| `clean` | Simple one-line subtitle at bottom |
-| `bold-stack` | Two-line uppercase, punchy Instagram style |
+The default `editorial` style: big lowercase white text sits just above your head, so your head passes in front of the words. The key word of each phrase (the punchline, a name or a number) switches to a pale-yellow italic serif on its own line. Words appear as you say them.
 
-Options: `--color`, `--font`, `--position top/center/bottom`, `--srt-in` (use existing SRT), `--srt-out` (export SRT).
+- `--emphasis "claude,edited"` picks the yellow words yourself.
+- `--fix "ChargeGPT=ChatGPT"` fixes misheard words.
+- `--fx-plan plan.json` moves the captions out of the way of your effects.
+
+Other styles are still there: `word-pop`, `highlight`, `karaoke`, `clean`, `bold-stack`.
+
+---
+
+## Sound Effects
+
+24 sounds, all synthesized in code, so there's nothing to download and nothing to license. They're mixed under your voice, never over it.
+
+```
+python scripts/sfx.py auto video.mp4 out.mp4 --fx-plan plan.json      # a matching sound for every effect
+python scripts/sfx.py add video.mp4 out.mp4 --plan sfx.json            # sounds at exact times
+python scripts/sfx.py list                                             # see them all
+```
+
+`whoosh` · `swoosh` · `whoosh-long` · `swipe` · `pop` · `bubble` · `tick` · `click` · `ding` · `chime` · `cash` · `impact` · `thud` · `stamp` · `riser` · `shimmer` · `typing` · `shutter` · `glitch` · `clunk` · `buzz` · `scribble` · `scratch` · `heartbeat`
+
+All of them are also in `assets/sfx/` as .wav files, ready to drag into CapCut.
 
 ---
 

@@ -6,7 +6,7 @@ cd "$(dirname "$0")/.."
 if ! command -v ffmpeg >/dev/null 2>&1 || ! command -v ffprobe >/dev/null 2>&1; then
   echo "NEED_FFMPEG: install ffmpeg first (Mac: brew install ffmpeg, Windows: winget install ffmpeg)"; exit 1
 fi
-if [ -x .venv/bin/python ] && .venv/bin/python -c "import mediapipe, cv2, PIL, numpy" 2>/dev/null; then echo READY; exit 0; fi
+if [ -x .venv/bin/python ] && .venv/bin/python -c "import mediapipe, cv2, PIL, numpy, scipy" 2>/dev/null; then echo READY; exit 0; fi
 
 PY=""
 for v in python3.12 python3.11 python3.13 python3.10 python3; do
@@ -24,4 +24,4 @@ else
   echo "NEED_PYTHON: install Python 3.10 or newer (python.org/downloads), then run this again"; exit 1
 fi
 
-.venv/bin/python -c "import mediapipe, cv2, PIL, numpy; print('READY')"
+.venv/bin/python -c "import mediapipe, cv2, PIL, numpy, scipy; print('READY')"

@@ -1,6 +1,6 @@
 ---
 name: effects
-description: Add any of 42 video effects to a talking-head video (orbit, spotlight, glass widgets, timeline, checklist, headline wall, comment box, phone fan, liquid glass graph, match-cut, iPhone toggles, LED sign and more). Effects track the speaker's face and can sit behind their head. Use when the user types /effects, names one of the effects, or asks to add an effect, zoom, grade, sticker or animation to their video.
+description: Edit talking-head videos: 42 visual effects, house-style captions, sound effects, B-roll, cuts, grading and speed ramps. Add any of 42 video effects to a talking-head video (orbit, spotlight, glass widgets, timeline, checklist, headline wall, comment box, phone fan, liquid glass graph, match-cut, iPhone toggles, LED sign and more). Effects track the speaker's face and can sit behind their head. Use when the user types /effects, names one of the effects, or asks to add an effect, zoom, grade, sticker or animation to their video.
 ---
 
 # Effects: 42 video effects (by @kemifrank__)
@@ -92,15 +92,21 @@ A single effect needs no plan: `.venv/bin/python scripts/fx.py orbit <video> <ou
 
 Aliases work too: `bill`, `to-do`, `follow`, `stamp`, `countdown`, `cover`, `rain`, `pause`.
 
-## 5. Captions (auto-caption your video)
+## 5. Captions (house style: `editorial`)
 
-Run `.venv/bin/python scripts/captions.py <video> <output.mp4> --style <style>`.
+Always use the `editorial` style unless the user asks for another one. It's the default.
 
-Styles: `word-pop` (one big word at a time), `highlight` (sentence with current word highlighted), `karaoke` (fills in word-by-word), `clean` (simple subtitle), `bold-stack` (two-line uppercase Instagram style).
+The look: lowercase white sans, big, with a soft shadow and no box. The key word of each phrase (the punchline, a name or a number) is set in a pale-yellow italic serif on its own line. Words appear as they're spoken. The block sits just above the head, so the head passes in front of the bottom of the words.
 
-Options: `--color` (accent color name or hex), `--font` (path to .ttf), `--position top/center/bottom`, `--max-words` (words per sentence group), `--srt-in` (use existing SRT), `--srt-out` (export SRT).
+1. Get the words: `.venv/bin/python scripts/words.py <video>` writes `<video>.words.json`. Read it and fix any misheard words (brand names especially: "ChargeGPT" means ChatGPT).
+2. Render: `.venv/bin/python scripts/captions.py <video> <out.mp4> --words <video>.words.json --fx-plan <plan.json>`
+   - `--fx-plan` moves captions to the bottom while an effect is using the space above the head. Under-the-chin effects (`checklist`, `liquid-glass-graph`) keep captions above the head.
+   - `--bottom-at "19-21.6,39.6-43"` adds extra bottom-caption windows: B-roll cutaways, a text hook, any overlay above the head.
+   - `--emphasis "claude,edited"` forces which words get the yellow serif. Otherwise they're picked automatically and used sparingly.
+   - `--fix "ChargeGPT=ChatGPT"` is a quick word fix without editing the JSON. `--no-behind` keeps the words in front of the head.
+3. Check a few frames: no word should vanish behind the head, and nothing should be cut off at the top.
 
-Example: `.venv/bin/python scripts/captions.py video.mp4 captioned.mp4 --style highlight --color purple --position bottom`
+Other styles (only when asked): `word-pop`, `highlight`, `karaoke`, `clean`, `bold-stack`, with `--color`, `--position top/center/bottom`, `--max-words`.
 
 ## 6. Cuts (remove dead space)
 
@@ -150,6 +156,27 @@ Commands:
 - `timelapse` — speed up the entire video. Options: `--speed` (default 4.0).
 
 Example: `.venv/bin/python scripts/speed.py slow-mo video.mp4 slowmo.mp4 --start 2.0 --end 4.0 --speed 0.3`
+
+## 10. Sound effects (always add them to a full edit)
+
+Every sound is synthesized by `scripts/sfx.py`, so there's nothing to download and no licences to worry about. They're mixed under the voice (about 6 dB below speech by default).
+
+- Auto: `.venv/bin/python scripts/sfx.py auto <video> <out.mp4> --fx-plan <plan.json> --extra <extra.json> --save-plan <sfx_used.json>`. This matches a sound to every effect in the plan, timed to its animation (impact when a backdrop word lands, ticks on checklist items, typing plus a chime on the comment box, a clunk when the lights drop, and so on).
+- `--extra` covers things that aren't in the fx plan: an impact on the opening hook, a whoosh about 0.2s before each B-roll cutaway and a swoosh as it leaves, typing on any typed text, a riser under a slow zoom, a ding or cash on results and numbers. Format: `[{"sfx": "whoosh", "at": 18.8, "vol": 0.8}, {"sfx": "typing", "at": 19.6, "dur": 1.4}]`.
+- Exact times only: `sfx.py add <video> <out.mp4> --plan sfx.json`.
+- Loudness: `--level` (default 0.35; 0.5 is punchier, 0.2 is subtle). Keep the voice on top.
+- `sfx.py list` shows all 24 sounds. They're also saved as .wav files in `assets/sfx/` for the user to drag into CapCut.
+
+Sounds: whoosh, swoosh, whoosh-long, swipe, pop, bubble, tick, click, ding, chime, cash, impact, thud, stamp, riser, shimmer, typing, shutter, glitch, clunk, buzz, scribble, scratch, heartbeat.
+
+## Full edit order
+1. Cut dead space (`cuts.py`), if wanted.
+2. Run `words.py` and fix the words.
+3. Effects (`fx.py`).
+4. B-roll, zooms, text hook.
+5. Captions (`captions.py`, editorial).
+6. Sound effects (`sfx.py`) last, because it only remixes the audio.
+7. Grade (`grade.py`), if wanted, before captions so the text stays clean.
 
 ## Rules
 - Never cover the face. Everything either goes behind the person or avoids the face by itself; if a check frame still shows text over the face, move it (`x`, `y`) or shorten the text.
