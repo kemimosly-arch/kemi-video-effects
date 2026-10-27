@@ -106,6 +106,8 @@ The look: lowercase white sans, big, with a soft shadow and no box. The key word
    - `--fix "ChargeGPT=ChatGPT"` is a quick word fix without editing the JSON. `--no-behind` keeps the words in front of the head.
 3. Check a few frames: no word should vanish behind the head, and nothing should be cut off at the top.
 
+Landscape (16:9 YouTube) is handled automatically. Captions sit in one low line with the yellow serif word inline, over a soft dark fade at the bottom of the frame. They never go behind the head, because a landscape frame has no room above it. The vertical-reel effects in `fx.py` don't fit 16:9 (they overlap the face or get cut off), so for landscape use side cards in the empty space left and right of the speaker instead.
+
 Other styles (only when asked): `word-pop`, `highlight`, `karaoke`, `clean`, `bold-stack`, with `--color`, `--position top/center/bottom`, `--max-words`.
 
 ## 6. Cuts (remove dead space)

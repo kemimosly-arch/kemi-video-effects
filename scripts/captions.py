@@ -435,14 +435,30 @@ def _wrap(words, f, maxw, space):
 
 def _tracked_width(s, f, tr): return sum(f.getlength(ch) for ch in s) + tr * max(0, len(s) - 1)
 
-def editorial_layout(group, emph, W, size=None):
+def editorial_layout(group, emph, W, size=None, H=None):
     """Lines of (text, kind, word_indexes). kind: 'sans' or 'serif'."""
     words = [w['w'].strip().strip('“”"') for w in group]
     words = [w.rstrip(',;:') for w in words]
-    S = size or int(W * 0.118)
+    land = H is not None and W > H        # 16:9 YouTube: lower-third band, narrower lines
+    MW = W * (0.7 if land else 0.88)
+    S = size or int(H * 0.078 if land else W * 0.118)
     while True:
         fs, fz = _sans(S), _font('serif', S * 1.5)
         tr = -S * 0.035; sp = fs.getlength(' ') * 0.85
+        if land:
+            # one low line (two at most), the yellow serif word sits inline
+            fz = _font('serif', S * 1.35)
+            items = []
+            for i, wd in enumerate(words):
+                ser = emph is not None and emph[0] <= i <= emph[1]
+                tk = wd.lower().rstrip('.!?') if ser else wd.lower()
+                items.append((i, tk, fz.getlength(tk) if ser else _tracked_width(tk, fs, tr), 'serif' if ser else 'sans'))
+            width = lambda its: sum(it[2] for it in its) + sp * max(0, len(its) - 1)
+            if width(items) <= MW or len(items) == 1: return [('mixed', items)], S, sp, tr
+            best = min(range(1, len(items)), key=lambda c: max(width(items[:c]), width(items[c:])))
+            if max(width(items[:best]), width(items[best:])) <= MW or S < 40:
+                return [('mixed', items[:best]), ('mixed', items[best:])], S, sp, tr
+            S = int(S * 0.9); continue
         blocks = []
         if emph is None: blocks.append(('sans', list(range(len(words)))))
         else:
@@ -455,35 +471,44 @@ def editorial_layout(group, emph, W, size=None):
             f = fs if kind == 'sans' else fz
             toks = [words[i].lower() if kind == 'sans' else words[i].lower().rstrip('.!?') for i in idx]
             items = [(j, tk, _tracked_width(tk, f, tr) if kind == 'sans' else f.getlength(tk)) for j, tk in zip(idx, toks)]
-            if any(ww > W * 0.9 for _, _, ww in items): ok = False
+            if any(ww > MW * 1.02 for _, _, ww in items): ok = False
             width = lambda its: sum(ww for _, _, ww in its) + sp * max(0, len(its) - 1)
-            if width(items) <= W * 0.88 or len(items) == 1:
+            if width(items) <= MW or len(items) == 1:
                 lines.append((kind, items))
             else:
                 # balanced two-line split: no lonely last word hiding behind your head
                 best = min(range(1, len(items)), key=lambda c: max(width(items[:c]), width(items[c:])))
-                if max(width(items[:best]), width(items[best:])) > W * 0.88: ok = False
+                if max(width(items[:best]), width(items[best:])) > MW: ok = False
                 lines.append((kind, items[:best])); lines.append((kind, items[best:]))
         if ok or S < 50: return lines, S, sp, tr
         S = int(S * 0.88)
 
 def render_editorial_layer(t, W, H, group, emph, anchor_y, size=None, color=EDITORIAL_YELLOW):
     """RGBA text layer. anchor_y = y of the bottom of the text block."""
-    lines, S, sp, tr = editorial_layout(group, emph, W, size)
+    lines, S, sp, tr = editorial_layout(group, emph, W, size, H)
     fs, fz = _sans(S), _font('serif', S * 1.5)
-    heights = [S * 1.02 if k == 'sans' else S * 1.32 for k, _ in lines]
+    heights = [S * 1.02 if k == 'sans' else (S * 1.42 if k == 'mixed' else S * 1.32) for k, _ in lines]
+    fzm = _font('serif', S * 1.35)
     y = max(H * 0.04, anchor_y - sum(heights))   # never off the top of the frame
     im = Image.new('RGBA', (W, H), (0, 0, 0, 0)); d = ImageDraw.Draw(im)
     for (kind, toks), lh in zip(lines, heights):
         f = fs if kind == 'sans' else fz
-        tot = sum(ww for _, _, ww in toks) + sp * (len(toks) - 1)
+        tot = sum(it[2] for it in toks) + sp * (len(toks) - 1)
         x = (W - tot) / 2
-        for j, tk, ww in toks:
+        for it in toks:
+            j, tk, ww = it[:3]
             w = group[j]
             k = min(1.0, max(0.0, (t - w['s'] + 0.04) / 0.14))      # each word arrives as it's spoken
             if k > 0:
                 a = int(255 * k); dy = (1 - k) * S * 0.18
-                if kind == 'sans':
+                if kind == 'mixed':
+                    base = y + S * 1.1 + dy
+                    if it[3] == 'serif': d.text((x, base), tk, font=fzm, fill=color + (a,), anchor='ls')
+                    else:
+                        cx = x
+                        for ch in tk:
+                            d.text((cx, base), ch, font=fs, fill=(255, 255, 255, a), anchor='ls'); cx += fs.getlength(ch) + tr
+                elif kind == 'sans':
                     cx = x
                     for ch in tk:
                         d.text((cx, y + dy), ch, font=f, fill=(255, 255, 255, a)); cx += f.getlength(ch) + tr
@@ -493,7 +518,7 @@ def render_editorial_layer(t, W, H, group, emph, anchor_y, size=None, color=EDIT
         y += lh
     # soft shadow for legibility on any background
     al = np.asarray(im)[..., 3]
-    sh = Image.fromarray((al * 0.55).astype(np.uint8)).filter(ImageFilter.GaussianBlur(max(4, S * 0.09)))
+    sh = Image.fromarray((al * (0.8 if W > H else 0.55)).astype(np.uint8)).filter(ImageFilter.GaussianBlur(max(4, S * 0.09)))
     out = Image.new('RGBA', (W, H), (0, 0, 0, 0))
     out.paste((0, 0, 0, 255), (0, int(S * 0.04)), sh)
     out.alpha_composite(im)
@@ -553,11 +578,17 @@ def run_editorial(a, words):
             nxt = groups[k + 1][0]['s'] if k + 1 < len(groups) else g[-1]['e'] + 0.6
             if g[0]['s'] - 0.05 <= t < min(nxt, g[-1]['e'] + 0.6): gi = k; break
         out = frame
+        if W > H:   # soft dark fade along the bottom so captions read on any outfit
+            if 'fade' not in locked:
+                g = np.clip((np.arange(H, dtype=np.float32) / H - 0.68) / 0.32, 0, 1) ** 1.3 * 0.65
+                locked['fade'] = (1 - g)[:, None, None]
+            out = frame = (frame.astype(np.float32) * locked['fade']).astype(np.uint8)
         if gi is not None:
             zone = 'head'
             for z0, z1, zn in zones:
                 if z0 <= t <= z1: zone = zn
             if a.position in ('bottom', 'top', 'center'): zone = a.position
+            if W > H and zone == 'head': zone = 'bottom'   # landscape: no room above the head
             key = (gi, zone)
             if key not in locked:      # text stays put for the whole phrase
                 if zone == 'head' and face_s is not None:
@@ -566,7 +597,7 @@ def run_editorial(a, words):
                 elif zone == 'head': locked[key] = H * 0.36
                 elif zone == 'top': locked[key] = H * 0.26
                 elif zone == 'center': locked[key] = H * 0.5
-                else: locked[key] = H * 0.9
+                else: locked[key] = H * (0.94 if W > H else 0.9)
             lay = render_editorial_layer(t, W, H, groups[gi], emph[gi], locked[key], color=color)
             ov = np.asarray(lay, np.float32) / 255; al = ov[..., 3:4]
             if zone == 'head' and not a.no_behind:
