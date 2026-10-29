@@ -324,9 +324,36 @@ SOUNDS = {
 }
 DUR_SOUNDS = {'typing', 'riser', 'shimmer', 'glitch', 'buzz', 'scribble', 'sub'}
 
+PACKS = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'assets', 'sfx', 'packs')
+
+# Designed sounds (CC0, from the uisfx project) for every synthesized cue: softer and more polished.
+# 'studio' = tactile, warm restraint; 'cinematic' = deeper, for transitions and big moments.
+DESIGNED = {
+    'whoosh': 'cinematic/swipe', 'swoosh': 'studio/swipe', 'whoosh-long': 'cinematic/expand', 'swipe': 'studio/swipe',
+    'pop': 'studio/press', 'bubble': 'soft/press', 'tick': 'studio/check', 'click': 'studio/select',
+    'ding': 'studio/success', 'chime': 'studio/notification', 'cash': 'studio/purchase', 'impact': 'cinematic/snap',
+    'thud': 'cinematic/press', 'stamp': 'cinematic/snap', 'riser': 'studio/progress-step', 'shimmer': 'studio/reward',
+    'shutter': 'studio/snap', 'glitch': 'studio/error', 'clunk': 'studio/toggle-off', 'buzz': 'studio/toggle-on',
+    'scratch': 'studio/back', 'heartbeat': 'cinematic/press', 'sub': None,
+    # 'typing' and 'scribble' stay synthesized
+}
+
+def is_pack(name): return '/' in name
+
+def load_pack(name):
+    path = os.path.join(PACKS, name + '.mp3')
+    p = subprocess.run(['ffmpeg', '-v', 'error', '-i', path, '-ac', '2', '-ar', str(SR), '-f', 'f32le', '-'], capture_output=True)
+    if not p.stdout: raise FileNotFoundError(path)
+    return np.frombuffer(p.stdout, np.float32).reshape(-1, 2).astype(np.float64)
+
 _cache = {}
 def get(name, dur=None):
     key = (name, round(dur, 2) if dur else None)
+    if key not in _cache and is_pack(name):
+        st = load_pack(name)
+        a = np.abs(st).max(1); act = st[a > a.max() * 0.05]
+        rms = np.sqrt((act ** 2).mean()) if len(act) else 1
+        _cache[key] = st / (rms + 1e-9) * 0.1 * 0.8
     if key not in _cache:
         fn, _, gain = SOUNDS[name]
         st = fn(dur) if (dur and name in DUR_SOUNDS) else fn()
@@ -431,7 +458,7 @@ def load_audio(src):
 def duration(src):
     return float(subprocess.check_output(['ffprobe', '-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', src]))
 
-def mix(src, dst, events, level=0.35):
+def mix(src, dst, events, level=0.35, style='designed'):
     dur = duration(src)
     voice = load_audio(src)
     n = int(dur * SR) + SR
@@ -442,7 +469,10 @@ def mix(src, dst, events, level=0.35):
     bus = np.zeros((max(n, len(voice)), 2))
     for ev in sorted(events, key=lambda e: e['at']):
         name = ev['sfx']
-        if name not in SOUNDS: print(f"  skip unknown sound '{name}'"); continue
+        if style == 'designed' and name in DESIGNED:
+            name = DESIGNED[name]
+            if name is None: continue
+        if not is_pack(name) and name not in SOUNDS: print(f"  skip unknown sound '{name}'"); continue
         st = get(name, ev.get('dur'))
         place(bus, st * float(ev.get('vol', 1.0)), max(0.0, float(ev['at'])))
     bus *= level * (vrms / 0.1)
@@ -474,16 +504,19 @@ def main():
     au.add_argument('input'); au.add_argument('output')
     au.add_argument('--fx-plan', required=True, help='The effects plan JSON used with fx.py')
     au.add_argument('--extra', help='Extra sounds JSON (B-roll cuts, zooms, hooks)')
+    au.add_argument('--style', default='designed', choices=['designed', 'synth'], help='designed = polished recorded-style pack sounds (default); synth = the original synthesized set')
     au.add_argument('--level', type=float, default=0.35, help='SFX loudness vs your voice (default 0.35; 0.5 = punchier, 0.2 = subtle)')
     au.add_argument('--save-plan', help='Also write the full sound plan to this JSON, so you can tweak it')
     ad = sub.add_parser('add', help='Add sounds at exact times')
     ad.add_argument('input'); ad.add_argument('output'); ad.add_argument('--plan', required=True)
+    ad.add_argument('--style', default='designed', choices=['designed', 'synth'], help='designed = polished recorded-style pack sounds (default); synth = the original synthesized set')
     ad.add_argument('--level', type=float, default=0.35)
     a = ap.parse_args()
 
     if a.cmd == 'list':
         print('Sound effects:\n')
-        for k, (_, desc, _) in SOUNDS.items(): print(f'  {k:12s} {desc}')
+        for k, (_, desc, _) in SOUNDS.items(): print(f'  {k:12s} {desc}' + (f'   (designed: {DESIGNED[k]})' if DESIGNED.get(k) else ''))
+        print('\nDesigned packs (use any directly, e.g. "studio/send"):', ', '.join(sorted(d for d in os.listdir(PACKS) if os.path.isdir(os.path.join(PACKS, d)))) if os.path.isdir(PACKS) else 'none')
     elif a.cmd == 'export':
         os.makedirs(a.folder, exist_ok=True)
         for k in SOUNDS:
@@ -494,9 +527,9 @@ def main():
         ev = auto_events(json.load(open(a.fx_plan)))
         if a.extra: ev += json.load(open(a.extra))
         if a.save_plan: json.dump(ev, open(a.save_plan, 'w'), indent=1)
-        mix(a.input, a.output, ev, a.level)
+        mix(a.input, a.output, ev, a.level, a.style)
     elif a.cmd == 'add':
-        mix(a.input, a.output, json.load(open(a.plan)), a.level)
+        mix(a.input, a.output, json.load(open(a.plan)), a.level, a.style)
     else:
         ap.print_help()
 

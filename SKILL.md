@@ -161,6 +161,8 @@ Example: `.venv/bin/python scripts/speed.py slow-mo video.mp4 slowmo.mp4 --start
 
 ## 10. Sound effects (always add them to a full edit)
 
+Default style is `designed`: polished, moderate sounds from the CC0 packs in `assets/sfx/packs`. Use `studio` for most cues, `cinematic` for transitions and big moments, and `soft` or `zen` for gentle ones. Any pack sound can be used directly, e.g. `{"sfx": "studio/send", "at": 4.2}`. Typing stays synthesized because the user likes it. Keep it moderate: avoid heavy impacts and bass beds unless asked. `--style synth` brings back the original synthesized set.
+
 Every sound is synthesized by `scripts/sfx.py`, so there's nothing to download and no licences to worry about. They're mixed under the voice (about 6 dB below speech by default).
 
 - Auto: `.venv/bin/python scripts/sfx.py auto <video> <out.mp4> --fx-plan <plan.json> --extra <extra.json> --save-plan <sfx_used.json>`. This matches a sound to every effect in the plan, timed to its animation (impact when a backdrop word lands, ticks on checklist items, typing plus a chime on the comment box, a clunk when the lights drop, and so on).
