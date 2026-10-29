@@ -479,7 +479,7 @@ def mix(src, dst, events, level=0.35, style='designed'):
     out = np.zeros_like(bus); out[:len(voice)] = voice; out += bus
     # gentle limiter so nothing clips
     pk = np.abs(out).max()
-    if pk > 0.95: out = np.tanh(out / pk * 1.4) / np.tanh(1.4) * 0.95
+    if pk > 0.95: out = out * (0.95 / pk)   # clean gain trim: never colours the voice
     out = out[:int(dur * SR)]
     wav = os.path.splitext(dst)[0] + '.__mix.wav'
     write_wav(wav, out)
