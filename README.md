@@ -117,7 +117,7 @@ Other styles are still there: `word-pop`, `highlight`, `karaoke`, `clean`, `bold
 
 ## Sound Effects
 
-24 sounds, all synthesized in code, so there's nothing to download and nothing to license. They're mixed under your voice, never over it.
+25 sounds, all synthesized in code, so there's nothing to download and nothing to license. They're mixed under your voice, never over it.
 
 ```
 python scripts/sfx.py auto video.mp4 out.mp4 --fx-plan plan.json      # a matching sound for every effect
@@ -125,7 +125,7 @@ python scripts/sfx.py add video.mp4 out.mp4 --plan sfx.json            # sounds 
 python scripts/sfx.py list                                             # see them all
 ```
 
-`whoosh` · `swoosh` · `whoosh-long` · `swipe` · `pop` · `bubble` · `tick` · `click` · `ding` · `chime` · `cash` · `impact` · `thud` · `stamp` · `riser` · `shimmer` · `typing` · `shutter` · `glitch` · `clunk` · `buzz` · `scribble` · `scratch` · `heartbeat`
+`whoosh` · `swoosh` · `whoosh-long` · `swipe` · `pop` · `bubble` · `tick` · `click` · `ding` · `chime` · `cash` · `impact` · `thud` · `stamp` · `riser` · `shimmer` · `typing` · `shutter` · `glitch` · `clunk` · `buzz` · `scribble` · `scratch` · `heartbeat` · `sub`
 
 All of them are also in `assets/sfx/` as .wav files, ready to drag into CapCut.
 

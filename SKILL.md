@@ -167,9 +167,9 @@ Every sound is synthesized by `scripts/sfx.py`, so there's nothing to download a
 - `--extra` covers things that aren't in the fx plan: an impact on the opening hook, a whoosh about 0.2s before each B-roll cutaway and a swoosh as it leaves, typing on any typed text, a riser under a slow zoom, a ding or cash on results and numbers. Format: `[{"sfx": "whoosh", "at": 18.8, "vol": 0.8}, {"sfx": "typing", "at": 19.6, "dur": 1.4}]`.
 - Exact times only: `sfx.py add <video> <out.mp4> --plan sfx.json`.
 - Loudness: `--level` (default 0.35; 0.5 is punchier, 0.2 is subtle). Keep the voice on top.
-- `sfx.py list` shows all 24 sounds. They're also saved as .wav files in `assets/sfx/` for the user to drag into CapCut.
+- `sfx.py list` shows all 25 sounds. They're also saved as .wav files in `assets/sfx/` for the user to drag into CapCut.
 
-Sounds: whoosh, swoosh, whoosh-long, swipe, pop, bubble, tick, click, ding, chime, cash, impact, thud, stamp, riser, shimmer, typing, shutter, glitch, clunk, buzz, scribble, scratch, heartbeat.
+Sounds: whoosh, swoosh, whoosh-long, swipe, pop, bubble, tick, click, ding, chime, cash, impact, thud, stamp, riser, shimmer, typing, shutter, glitch, clunk, buzz, scribble, scratch, heartbeat, sub (low bass bed under a hook).
 
 ## Full edit order
 1. Cut dead space (`cuts.py`), if wanted.

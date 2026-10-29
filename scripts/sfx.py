@@ -277,6 +277,15 @@ def s_scratch():
     x = np.sin(2 * np.pi * 220 * phase * 8) * 0.4 + bp(noise(dur, 151), 400, 4000) * np.abs(speed) * 0.6
     return reverb(stereo(x * np.clip((dur - t) / 0.05, 0, 1)), 0.3, 0.1)
 
+def s_sub(dur=2.4):
+    """Low cinematic bass bed: sits under a hook and drops out on the cut."""
+    t = T(dur)
+    x = np.sin(2 * np.pi * 49 * t) + 0.35 * np.sin(2 * np.pi * 98 * t + 0.5) + 0.12 * np.sin(2 * np.pi * 147 * t)
+    x *= 1 + 0.08 * np.sin(2 * np.pi * 0.9 * t)
+    e = np.clip(t / 0.12, 0, 1) * np.clip((dur - t) / 0.08, 0, 1)
+    x = np.tanh(1.3 * x * e) + 0.04 * lp(noise(dur, 161), 300) * e
+    return stereo(x)
+
 def s_heartbeat():
     st = blank(0.9)
     for at, g in ((0, 1), (0.22, 0.7)):
@@ -311,8 +320,9 @@ SOUNDS = {
     'scribble':    (s_scribble,    'Marker drawing', 0.6),
     'scratch':     (s_scratch,     'Record scratch: freeze frames, "wait, what?"', 0.7),
     'heartbeat':   (s_heartbeat,   'Heartbeat thump: suspense', 0.9),
+    'sub':         (s_sub,         'Low bass bed under a hook (use "dur")', 0.55),
 }
-DUR_SOUNDS = {'typing', 'riser', 'shimmer', 'glitch', 'buzz', 'scribble'}
+DUR_SOUNDS = {'typing', 'riser', 'shimmer', 'glitch', 'buzz', 'scribble', 'sub'}
 
 _cache = {}
 def get(name, dur=None):

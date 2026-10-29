@@ -822,7 +822,7 @@ def fx_red_collage(c, e):
     place(c, w, c.W / 2, max(w.height * 0.42, c.fy - c.fw * 1.05), s, 0, clamp(c.lt / 0.12) * al, behind=True)
     lines = e.o.get('lines', 'ONE CLIP.|42 EFFECTS.|ZERO APPS.').split('|')
     size = cached(e, 'sz', lambda: lines_fit(lines, c.W * 0.8, 'uib', int(c.W * 0.14)))
-    y = max(c.H * 0.5, c.fy + c.fw * 1.55)
+    y = min(max(c.H * 0.5, c.fy + c.fw * 1.55), c.H * 0.89 - size * len(lines))   # always fits above the tag
     for j, ln in enumerate(lines):
         im = cached(e, ('l', j), lambda: text_img(ln, size, 'uib', red if j == 1 else (255, 255, 255), shadow=8))
         kk = clamp((c.lt - 0.18 - 0.13 * j) / 0.16)
