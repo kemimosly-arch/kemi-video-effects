@@ -124,6 +124,7 @@ def comp(c, layer, x, y, alpha=1.0, behind=False, guard=False):
     L = L[y0 - y:y1 - y, x0 - x:x1 - x]
     a = L[..., 3:4] * alpha
     m = c.m[y0:y1, x0:x1, None]
+    if getattr(c, 'front', False): behind = guard = False   # 'front': true puts the effect fully in front of the person
     if behind: a = a * (1 - m)
     elif guard:
         yy, xx = np.ogrid[y0:y1, x0:x1]
@@ -1529,8 +1530,8 @@ def fx_carousel_spin(c, e):
     c.img *= (dim * (1 - c.m) + c.m)[..., None]
     p = clamp(c.lt / e.d); spin = float(e.o.get('turns', 1.1)) * 2 * math.pi * (1 - (1 - p) ** 2.4)
     intro, out = ease_out(c.lt / 0.45), fade(c, e, 0.25)
-    R, ry = c.W * 0.56 * intro, c.H * 0.07
-    cy = c.fy + c.fw * 1.8
+    R, ry = c.W * 0.56 * intro, c.H * 0.07 * float(e.o.get('tilt', 1.0))
+    cy = c.fy + c.fw * float(e.o.get('drop', 1.8))   # 'drop': ring height below the face centre (0.2 = around your head)
     items = sorted((math.cos(i * 2 * math.pi / K + spin), i * 2 * math.pi / K + spin, i) for i in range(K))
     for depth, th, i in items:
         n = len(cards); f, dk = cards[(i * (3 if n % 3 else 2)) % n]; src = f if depth >= 0 else dk  # spread similar covers apart
@@ -2013,7 +2014,7 @@ def main():
             c.m = cv2.resize(m, (W, H), interpolation=cv2.INTER_LINEAR).astype(np.float32) / 255.0 if m is not None else np.zeros((H, W), np.float32)
             fx_, fy_, fw_ = sm[min(i, len(sm) - 1)]; c.fx, c.fy, c.fw = fx_ * sc, fy_ * sc, max(fw_ * sc, W * 0.05)
             for f in act:
-                c.lt = t - f.start; EFFECTS[f.name][0](c, f)
+                c.lt = t - f.start; c.front = str(f.o.get('front', '')).lower() in ('1', 'true', 'yes'); EFFECTS[f.name][0](c, f); c.front = False
             frame = (np.clip(c.img, 0, 1) * 255 + 0.5).astype(np.uint8)
         if stills is not None:
             out = dst if len(stills) == 1 else dst.replace('.png', f'_{t:.2f}.png')
