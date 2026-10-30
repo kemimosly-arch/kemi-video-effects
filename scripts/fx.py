@@ -33,7 +33,7 @@ ALIASES = {'the-noise': 'noise', 'the-lineup': 'lineup', 'bill': 'the-bill', 'to
            'liquid-glass': 'liquid-glass-graph', 'glass-graph': 'liquid-glass-graph', 'carousel': 'carousel-spin', 'match': 'match-cut',
            'toggles': 'apple-toggles', 'led': 'led-sign', 'push': 'slow-push', 'push-in': 'slow-push'}
 LOOK_NAMES = {'glitter-spotlight': ('spotlight', 'sparkle'), 'glitter': ('spotlight', 'sparkle')}  # a named look of another effect
-CARD_FX = ('noise', 'orbit', 'carousel-spin', 'check-pills', 'profile-wall', 'phone-fan', 'broll-split', 'timeline')
+CARD_FX = ('noise', 'reel-cloud', 'orbit', 'carousel-spin', 'check-pills', 'profile-wall', 'phone-fan', 'broll-split', 'timeline')
 
 
 def effect(name, desc):
@@ -228,6 +228,53 @@ def fx_noise(c, e):
         if c.lt < t0: break
         k = ease_back((c.lt - t0) / 0.25)
         place(c, cards[i % len(cards)], x * c.W, y * c.H, 0.6 + 0.4 * k, r, clamp((c.lt - t0) / 0.08) * out, behind=True)
+
+
+@effect('reel-cloud', 'your reels float around your head with play badges, under a boxed two-line headline')
+def fx_reel_cloud(c, e):
+    cw = int(c.W * float(e.o.get('size', 0.22)))
+    views = [v for v in str(e.o.get('views', '')).split('|') if v]
+    def mk():
+        out = []
+        for i, im in enumerate(e.cards):
+            cd = card(vary(im, i) if e.o.get('images') is None else im, cw)
+            d = ImageDraw.Draw(cd); bx, by = int(cw * 0.12), int(cd.height - cw * 0.32)
+            d.polygon([(bx, by), (bx, by + cw * 0.09), (bx + cw * 0.08, by + cw * 0.045)], fill=(255, 255, 255, 240))
+            if views:
+                d.text((bx + cw * 0.12, by + cw * 0.045), views[i % len(views)], font=font('uib', cw * 0.085), fill=(255, 255, 255, 245), anchor='lm')
+            out.append(cd)
+        return out
+    cards = cached(e, 'cards', mk)
+    # slots around the head (x, y relative to the face; tilt; in front?) like a cloud of reels
+    # slots as fractions of the frame, laid out like the reference: a ring of reels under the headline,
+    # the upper ones tucked behind the head, two in front at chest height
+    slots = [(0.11, 0.40, -6, 0), (0.28, 0.27, 3, 0), (0.74, 0.27, -3, 0), (0.90, 0.40, 6, 0),
+             (0.10, 0.63, -4, 0), (0.90, 0.62, 4, 0), (0.31, 0.82, 2, 1), (0.69, 0.81, -2, 1)]
+    off = (c.fx - c.W / 2) * 0.3
+    out_k = clamp((e.d - c.lt) / 0.25)
+    for i, (dx, dy, rot, front) in enumerate(slots):
+        t0 = 0.05 + 0.06 * i
+        if c.lt < t0: continue
+        k = ease_back((c.lt - t0) / 0.35)
+        bob = math.sin(c.lt * 1.6 + i * 1.3) * c.H * 0.004
+        x = min(max(dx * c.W + off, cw * 0.45), c.W - cw * 0.45); y = dy * c.H + bob
+        place(c, cards[i % len(cards)], x, y, 0.7 + 0.3 * k, rot, clamp((c.lt - t0) / 0.1) * out_k,
+              behind=not front, guard=bool(front))
+    lines = [l for l in str(e.o.get('text', 'Make your videos|too sticky to skip')).split('|') if l]
+    S = cached(e, 'hs', lambda: lines_fit(lines, c.W * 0.7, 'uib', int(c.W * 0.062)))
+    y = c.H * float(e.o.get('y', 0.06))
+    for j, ln in enumerate(lines):
+        kj = clamp((c.lt - 0.1 - 0.1 * j) / 0.2)
+        if kj <= 0: y += S * 1.42; continue
+        def boxed(ln=ln):
+            t = text_img(ln, S, 'uib', (255, 255, 255))
+            b = Image.new('RGBA', (int(t.width + S * 0.55), int(S * 1.32)), (0, 0, 0, 0))
+            ImageDraw.Draw(b).rounded_rectangle([0, 0, b.width - 1, b.height - 1], int(S * 0.18), fill=(14, 14, 16, 235))
+            b.alpha_composite(t, (int((b.width - t.width) / 2), int((b.height - t.height) / 2)))
+            return b
+        im = cached(e, ('hb', j), boxed)
+        place(c, im, c.W / 2, y + S * 0.66, 0.92 + 0.08 * ease_out(kj), 0, kj * out_k)
+        y += S * 1.42
 
 
 @effect('lineup', 'numbered tiles fan out in an arc above your head')
