@@ -424,6 +424,11 @@ def editorial_groups(words, max_words=5, gap=0.35):
     if cur: groups.append(cur)
     return groups
 
+def _lc(w):
+    """Lowercase for the editorial look, but keep acronyms (GP, AI, NHS, UK) in capitals."""
+    core = w.strip('.,!?;:"')
+    return w if len(core) >= 2 and core.isupper() and core.isalpha() else w.lower()
+
 def _wrap(words, f, maxw, space):
     lines, cur, cw = [], [], 0
     for w in words:
@@ -451,7 +456,7 @@ def editorial_layout(group, emph, W, size=None, H=None):
             items = []
             for i, wd in enumerate(words):
                 ser = emph is not None and emph[0] <= i <= emph[1]
-                tk = wd.lower().rstrip('.!?') if ser else wd.lower()
+                tk = _lc(wd).rstrip('.!?') if ser else _lc(wd)
                 items.append((i, tk, fz.getlength(tk) if ser else _tracked_width(tk, fs, tr), 'serif' if ser else 'sans'))
             width = lambda its: sum(it[2] for it in its) + sp * max(0, len(its) - 1)
             if width(items) <= MW or len(items) == 1: return [('mixed', items)], S, sp, tr
@@ -469,7 +474,7 @@ def editorial_layout(group, emph, W, size=None, H=None):
         lines, ok = [], True
         for kind, idx in blocks:
             f = fs if kind == 'sans' else fz
-            toks = [words[i].lower() if kind == 'sans' else words[i].lower().rstrip('.!?') for i in idx]
+            toks = [_lc(words[i]) if kind == 'sans' else _lc(words[i]).rstrip('.!?') for i in idx]
             items = [(j, tk, _tracked_width(tk, f, tr) if kind == 'sans' else f.getlength(tk)) for j, tk in zip(idx, toks)]
             if any(ww > MW * 1.02 for _, _, ww in items): ok = False
             width = lambda its: sum(ww for _, _, ww in its) + sp * max(0, len(its) - 1)
