@@ -204,6 +204,24 @@ Use `--plan speed.json` for multiple speed ramps in one render.
 
 ---
 
+---
+
+## The web app
+
+`app.py` is a simple web app around this toolkit. You upload a talking video, choose captions, effects, sound effects, pause cutting and a colour grade, and download the edited reel.
+
+**Run it on your computer:** run `bash scripts/setup.sh` once, then `.venv/bin/python app.py`, and open http://localhost:7860.
+
+**Put it online free on Hugging Face Spaces:**
+1. Run `bash deploy/make_space.sh`. It builds `reel-editor-space.zip`.
+2. On huggingface.co, click **New Space**, give it a name, choose **Gradio**, choose the free **CPU basic** hardware, then create it.
+3. Open the Space's **Files** tab, click **Add file → Upload files**, drag in everything from inside the zip, then commit.
+4. Optional: in **Settings → Variables and secrets**, add a secret named `ANTHROPIC_API_KEY`. With it, Claude reads each script and places the effects. Without it, a built-in planner picks the moments.
+
+Settings you can change as variables: `MAX_SECONDS` (longest video allowed, default 90) and `WHISPER_MODEL` (`base` by default; `small` is more accurate but slower).
+
+Editing is slow on CPU. In testing on 2 CPUs (the same as the free Space), a 10 to 16 second clip took about 6 minutes, so a 30-second video takes about 12 minutes and a 90-second one about 35. Paid hardware is much faster.
+
 ## Honest notes
 - These are **starter versions**. They draft, you approve. Watch the result before you post.
 - For more AI content tips, follow [@kemifrank__](https://instagram.com/kemifrank__) or visit [ikemesitaliozor.com](https://ikemesitaliozor.com).

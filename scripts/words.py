@@ -23,7 +23,9 @@ except ImportError:
     model = WhisperModel(os.environ.get('WHISPER_MODEL', 'base'), device='cpu', compute_type='int8')
     import numpy as np  # decode with ffmpeg: works on every phone format (.mov, .mp4, .m4a)
     pcm = subprocess.run(['ffmpeg', '-v', 'error', '-i', src, '-ac', '1', '-ar', '16000', '-f', 's16le', '-'], capture_output=True).stdout
-    segs, _ = model.transcribe(np.frombuffer(pcm, np.int16).astype(np.float32) / 32768, word_timestamps=True, vad_filter=True)
+    lang = os.environ.get('WHISPER_LANG', 'en') or None   # set WHISPER_LANG=auto to let Whisper guess
+    segs, _ = model.transcribe(np.frombuffer(pcm, np.int16).astype(np.float32) / 32768, word_timestamps=True, vad_filter=True,
+                               language=None if lang == 'auto' else lang)
     words = [{'w': w.word.strip(), 's': round(w.start, 2), 'e': round(w.end, 2)} for s in segs for w in (s.words or [])]
 
 json.dump(words, open(out, 'w'), indent=0)
