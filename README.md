@@ -6,7 +6,15 @@ Made by [@kemifrank__](https://instagram.com/kemifrank__) 💜
 
 ![Effects](assets/preview.jpg)
 
-## Install (one line)
+## Use it in the Claude app (claude.ai, desktop or phone)
+
+1. Download **[effects.zip](https://github.com/kemimosly-arch/kemi-video-effects/raw/main/effects.zip)**. Use this file, not GitHub's green "Code → Download ZIP" button: that one contains the whole project (over 1,000 files) and Claude will refuse it.
+2. In Claude, open **Customize → Skills**, click **+**, then **Upload a skill**, and choose `effects.zip`. Don't unzip it first.
+3. Turn the skill on, start a chat, drag in your video and say what you want, e.g. *"/effects cut my mistakes, add captions and a clean zoom"*.
+
+Code execution must be on (Settings → Capabilities) for the skill to run.
+
+## Install in Claude Code (one line)
 
 Open the Terminal app (or the terminal inside Claude Code) and paste:
 

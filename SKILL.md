@@ -1,9 +1,9 @@
 ---
 name: effects
-description: Edit talking-head videos: clean cuts (removes um, uh, stutters, mistakes and retakes), auto colour grade, 107 visual effects, 21 caption styles (including a cream-and-green editorial look) with cute fonts, sound effects, B-roll, cuts, grading and speed ramps. Effects include orbit, spotlight, glass widgets, headline wall, comment box, neon word, stickers, confetti, polaroid, DM bubbles, notifications, poll, VHS, light leaks and more. Effects track the speaker's face and can sit behind their head. Use when the user types /effects, names one of the effects, or asks to add an effect, zoom, grade, sticker or animation to their video, or to cut fillers, mistakes or pauses.
+description: Edit talking-head videos: cut fillers and mistakes, auto colour grade, captions, 107 effects, sound effects, B-roll and zooms. Use for /effects or any request to edit a video.
 ---
 
-# Effects: 42 video effects (by @kemifrank__)
+# Effects: 107 video effects, captions, clean cuts and grading (by @kemifrank__)
 
 The user is usually not technical. Keep replies short and friendly, do the work for them, and never ask them to run commands themselves.
 
