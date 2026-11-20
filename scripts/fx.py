@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""42 video effects for your content, by @kemifrank__
+"""100 video effects for your content, by @kemifrank__
 
 One effect:    python fx.py orbit in.mp4 out.mp4 --start 3.2 --end 6
 Many effects:  python fx.py --plan plan.json in.mp4 out.mp4
@@ -1991,6 +1991,12 @@ def load_cards(folder, thumbs):
                 cap = cv2.VideoCapture(p); cap.set(cv2.CAP_PROP_POS_MSEC, 1000); ok, fr = cap.read(); cap.release()
                 if ok: out.append(Image.fromarray(cv2.cvtColor(fr, cv2.COLOR_BGR2RGB)))
     return out or thumbs
+
+
+# ---------- extra effect packs (fx_more*.py) ----------
+import glob as _glob
+for _p in sorted(_glob.glob(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'fx_more*.py'))):
+    exec(open(_p, encoding='utf-8').read(), globals())
 
 
 def main():

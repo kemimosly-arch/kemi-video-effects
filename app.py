@@ -6,6 +6,7 @@ import os, queue, shutil, sys, tempfile, threading, time
 import gradio as gr
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'app'))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'scripts'))
 import pipeline as P
 
 MAX_SECONDS = int(os.environ.get('MAX_SECONDS', '90'))
@@ -42,6 +43,8 @@ theme = gr.themes.Soft(primary_hue=BROWN, secondary_hue=BROWN, neutral_hue=gr.th
 
 HEAD = '<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,500&display=swap" rel="stylesheet">'
 
+import caption_styles as CS
+CAPTION_CHOICES = ['House style (lowercase + yellow serif)'] + [k.replace('-', ' ').capitalize() for k in CS.PRESETS] + ['Word pop', 'Highlight', 'Karaoke', 'Clean subtitle', 'Bold stack', 'Off']
 EFFECT_CHOICES = [(f'{k}  ·  {v}', k) for k, v in P.EFFECTS.items()]
 DEFAULT_FX = ['backdrop-word', 'reel-cloud', 'red-collage', 'checklist', 'liquid-glass-graph', 'comment-box']
 
@@ -97,8 +100,7 @@ with gr.Blocks(title='Reel Editor') as demo:
             video = gr.Video(label='Upload (vertical, under 90 seconds)', sources=['upload'], elem_classes='card')
             gr.HTML('<div class="step-label">2 · the edit</div>')
             with gr.Group(elem_classes='card'):
-                captions = gr.Dropdown(['House style (lowercase + yellow serif)', 'Word pop', 'Highlight', 'Karaoke',
-                                        'Clean subtitle', 'Bold stack', 'Off'], value='House style (lowercase + yellow serif)', label='Captions')
+                captions = gr.Dropdown(CAPTION_CHOICES, value='House style (lowercase + yellow serif)', label='Captions')
                 n_fx = gr.Slider(0, 8, value=4, step=1, label='How many effects')
                 sfx = gr.Radio(['Off', 'Subtle', 'Balanced', 'Punchy'], value='Balanced', label='Sound effects')
                 cut = gr.Radio(['Off', 'Light', 'Medium', 'Tight'], value='Light', label='Cut pauses')

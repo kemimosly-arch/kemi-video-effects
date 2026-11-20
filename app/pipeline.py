@@ -24,6 +24,16 @@ EFFECTS = {
     'led-sign':           'Lights dim and an LED sign glows behind you',
     'spotlight':          'Lights drop, you stay lit, a word glows behind you',
     'comment-box':        'A comment types a word and gets a reply (great for CTAs)',
+    'stacked-words':      'Three words stack up behind your head in different fonts',
+    'neon-word':          'A neon word flickers on behind your head',
+    'bubble-word':        'A squishy bubble-letter word bounces in',
+    'sticker-pack':       'Cute stickers slap on around you',
+    'sparkles':           'Twinkling sparkles around your head',
+    'confetti':           'A burst of confetti',
+    'bw-pop':             'The room goes black and white, you stay in colour',
+    'polaroid':           'You become a polaroid photo with a caption',
+    'big-number':         'A huge number counts up behind your head',
+    'like-burst':         'A big heart pops and little hearts float up',
 }
 ZOOM_FX = {'lean-in': 'A quick punch-in on one word', 'slow-push': 'A slow cinematic push-in'}
 
@@ -171,11 +181,18 @@ def heuristic_plan(words, dur, chosen, n):
                 fx = alt[0] if alt else 'backdrop-word'
         graphs += fx == 'liquid-glass-graph'; prev = fx
         e_ = {'fx': fx, 'start': s, 'end': e}
-        if fx in ('backdrop-word', 'spotlight'): e_['text'] = word.upper()
+        if fx in ('backdrop-word', 'spotlight', 'neon-word', 'bubble-word'): e_['text'] = word.upper() if fx in ('backdrop-word', 'spotlight') else word
+        elif fx == 'stacked-words':
+            strong = [x.upper() for x in sent if not weak(x)][:3]; e_['text'] = '|'.join(strong or [word.upper()])
+        elif fx == 'big-number':
+            raw = w['w'].strip(' ,.!?'); e_.update(to=raw if any(ch.isdigit() for ch in raw) else '100')
+        elif fx == 'polaroid': e_['text'] = ' '.join(x.lower() for x in sent if not weak(x))[:22] or 'core memory'
+        elif fx == 'sticker-pack': e_['text'] = 'wow!'
         elif fx == 'led-sign': e_['text'] = word.upper()
         elif fx == 'red-collage':
             strong = [x.lower() for x in sent if not weak(x) and clean(x) != word][:3]
-            e_.update(text=word.upper(), lines='|'.join(strong + [''] * (3 - len(strong))))
+            if len(strong) < 2: fx = e_['fx'] = 'backdrop-word'; e_['text'] = word.upper()
+            else: e_.update(text=word.upper(), lines='|'.join(strong))
         elif fx in ('reel-cloud', 'phone-fan'):
             l1, l2 = split_lines(sent, 2, 4); e_['text'] = f'{l1[:1].upper() + l1[1:]}|{l2}'.rstrip('|')
         elif fx == 'liquid-glass-graph':
@@ -199,6 +216,11 @@ def heuristic_plan(words, dur, chosen, n):
         elif fx == 'glass-widgets':
             e_.update(look='simple')
         plan.append(e_)
+    # never overlap: trim each effect to end before the next one starts
+    plan.sort(key=lambda p: p['start'])
+    for p_, q_ in zip(plan, plan[1:]):
+        p_['end'] = round(min(p_['end'], q_['start'] - 0.15), 2)
+    plan = [p_ for p_ in plan if p_['end'] - p_['start'] >= 1.2]
     if cta is not None:
         s = round(max(0, words[cta]['s'] - 0.4), 2)
         plan = [p for p in plan if p['end'] < s - 0.3 or p['start'] > s + 3.0]
@@ -293,9 +315,10 @@ def edit(src, work, opts, log):
     if opts['captions'] != 'Off':
         log('Adding captions...'); nxt = os.path.join(work, 'v4_caps.mp4')
         style = {'House style (lowercase + yellow serif)': 'editorial', 'Word pop': 'word-pop', 'Highlight': 'highlight',
-                 'Karaoke': 'karaoke', 'Clean subtitle': 'clean', 'Bold stack': 'bold-stack'}[opts['captions']]
+                 'Karaoke': 'karaoke', 'Clean subtitle': 'clean', 'Bold stack': 'bold-stack'}.get(opts['captions'],
+                 opts['captions'].lower().replace(' ', '-'))
         cmd = [PY, '-I', os.path.join(SCRIPTS, 'captions.py'), cur, nxt, '--words', words_path, '--style', style, '--fx-plan', plan_path]
-        if style != 'editorial': cmd += ['--position', 'bottom']
+        if style in ('word-pop', 'highlight', 'karaoke', 'clean', 'bold-stack'): cmd += ['--position', 'bottom']
         run(cmd, log); cur = nxt; summary.append(f"Captions: {opts['captions']}")
 
     if opts['sfx'] != 'Off':

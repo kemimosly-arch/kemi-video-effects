@@ -1,10 +1,10 @@
 # Video Effects & Editing Toolkit for Claude
 
-42 visual effects + house-style captions + sound effects + dead-space cutting + B-roll insertion + color grading + speed ramps. Drop your video into Claude and tell it what you want.
+100 visual effects + 20 caption styles + 18 cute fonts + sound effects + dead-space cutting + B-roll insertion + color grading + speed ramps. Drop your video into Claude and tell it what you want.
 
 Made by [@kemifrank__](https://instagram.com/kemifrank__) 💜
 
-![All 42 effects](assets/preview.jpg)
+![Effects](assets/preview.jpg)
 
 ## Install (one line)
 
@@ -39,7 +39,7 @@ Claude checks a few frames first, fixes anything that covers your face, then ren
 
 You can stack effects in one go: *"Add locked-on from 6 to 10s, then orbit from 10 to 13s, then a reject stamp on 'no'."*
 
-## The 42 effects
+## The 100 effects
 
 | # | Type this | What happens |
 |---|---|---|
@@ -85,6 +85,64 @@ You can stack effects in one go: *"Add locked-on from 6 to 10s, then orbit from 
 | 40 | `apple-toggles` | iPhone switches flip on under your chin, one line at a time |
 | 41 | `led-sign` | The lights drop and a glowing LED sign types itself out behind you |
 | 42 | `slow-push` | A slow cinematic push-in while the room melts out of focus |
+| 43 | `reel-cloud` | Your reels float around your head under a two-line headline in black boxes |
+| 44 | `stacked-words` | Three words stack up behind your head, each in a different font |
+| 45 | `word-rain` | Your word rains down behind you in every size |
+| 46 | `outline-echo` | A giant word with outline echoes pulsing out behind your head |
+| 47 | `neon-word` | A neon tube word flickers on behind your head |
+| 48 | `script-word` | A word writes itself in pretty script behind your head |
+| 49 | `bubble-word` | A squishy bubble-letter word bounces in behind your head |
+| 50 | `sticker-word` | A word slaps on like a sticker beside your face |
+| 51 | `letter-drop` | The letters of a word drop in one by one and bounce |
+| 52 | `marquee` | A scrolling ticker band of your text runs behind you |
+| 53 | `big-number` | A huge number counts up behind your head |
+| 54 | `quote-card` | A glass quote card with your words slides up under your chin |
+| 55 | `highlight-words` | Three key words pop up around your head in marker boxes |
+| 56 | `side-titles` | Tall magazine titles run up both sides of the frame |
+| 57 | `speech-bubble` | A comic speech bubble pops out beside your face |
+| 58 | `thought-bubble` | A fluffy thought cloud floats above your head |
+| 59 | `arrows-in` | Hand-drawn arrows sketch in from both sides, pointing at you |
+| 60 | `doodle-crown` | A hand-drawn crown sketches itself onto your head |
+| 61 | `sparkles` | Twinkling sparkles dance around your head |
+| 62 | `confetti` | A burst of confetti pops and flutters down |
+| 63 | `vhs` | A retro VHS look: scanlines, colour bleed and a REC timestamp |
+| 64 | `light-leak` | A warm film light leak washes across the frame |
+| 65 | `film-burn` | An orange film-burn flash, great as a transition |
+| 66 | `bw-pop` | The room turns black and white while you stay in full colour |
+| 67 | `color-room` | Your background turns one bold colour while you stay natural |
+| 68 | `bokeh` | Soft glowing bokeh lights drift behind you |
+| 69 | `dream-glow` | A soft, dreamy glow with lifted haze |
+| 70 | `strobe` | Quick white flashes on the beat |
+| 71 | `duotone` | The whole frame becomes a two-colour poster look |
+| 72 | `portrait-blur` | Portrait mode: the background melts into soft blur |
+| 73 | `rgb-glitch` | A digital RGB-split glitch with tearing bands |
+| 74 | `shake` | A short handheld camera shake for impact (no zoom) |
+| 75 | `flash` | A clean white flash, the classic cut transition |
+| 76 | `polaroid` | Your shot shrinks into a tilted polaroid photo with a handwritten caption |
+| 77 | `phone-frame` | You shrink into a phone screen, like a reel inside a reel |
+| 78 | `window-frame` | You appear inside a desktop app window with traffic-light buttons |
+| 79 | `film-strip` | Film-strip borders with sprocket holes roll down the sides |
+| 80 | `cinema-bars` | Cinema bars slide in with a title, like a movie trailer |
+| 81 | `grid-split` | Your shot multiplies into a 3x3 grid, then snaps back |
+| 82 | `notifications` | Phone notifications stack in above your head, one by one |
+| 83 | `dm-bubbles` | Chat bubbles pop in like a DM conversation beside you |
+| 84 | `search-bar` | A search bar types your question, with suggestions dropping down |
+| 85 | `poll` | A poll sticker appears and the votes fill up live |
+| 86 | `progress-bar` | A glossy progress bar fills up with a label and percent |
+| 87 | `stat-cards` | Three stat cards pop up in a row under your chin |
+| 88 | `calendar` | A calendar page pops in and a date gets circled |
+| 89 | `price-tag` | A price tag swings in on a string beside you |
+| 90 | `before-after` | A BEFORE / AFTER split with a sliding divider and labels |
+| 91 | `subscribe` | A red Subscribe button gets clicked, then a bell rings |
+| 92 | `like-burst` | A big heart pops, then little hearts burst and float up |
+| 93 | `star-rating` | Five stars fill in one after another with a rating |
+| 94 | `timer-ring` | A circular countdown ring ticks down beside you |
+| 95 | `email-pop` | A new email card slides down with a subject line |
+| 96 | `quiz-card` | A quiz card appears and the right answer lights up green |
+| 97 | `money-rain` | Bills and coins rain down behind you |
+| 98 | `location-pin` | A map pin drops in with the name of a place |
+| 99 | `now-playing` | A music player card with a moving waveform: now playing |
+| 100 | `sticker-pack` | Cute stickers (heart, star, smiley, "wow") slap on around you one by one |
 
 Bonus looks: `/effects glitter-spotlight` (golden rays and sparkles), `cover-star look=editorial` (a classic magazine cover) and `liquid-glass-graph look=bento` (a glass dashboard around you).
 
@@ -111,13 +169,13 @@ The default `editorial` style: big lowercase white text sits just above your hea
 - `--fix "ChargeGPT=ChatGPT"` fixes misheard words.
 - `--fx-plan plan.json` moves the captions out of the way of your effects.
 
-Other styles are still there: `word-pop`, `highlight`, `karaoke`, `clean`, `bold-stack`.
+**19 more caption styles:** `bubbly`, `sticker`, `handwritten`, `candy`, `neon`, `boxed`, `marker`, `typewriter`, `luxe`, `retro`, `comic`, `soft-pill`, `wavy`, `cherry`, plus the classic `word-pop`, `highlight`, `karaoke`, `clean`, `bold-stack`. Example: `--style bubbly`.
 
 ---
 
 ## Sound Effects
 
-25 sounds, all synthesized in code, so there's nothing to download and nothing to license. They're mixed under your voice, never over it.
+25 synthesized sounds plus 12 designed sound packs (about 840 sounds, CC0), so there's nothing to download and nothing to license. They're mixed under your voice, never over it.
 
 ```
 python scripts/sfx.py auto video.mp4 out.mp4 --fx-plan plan.json      # a matching sound for every effect

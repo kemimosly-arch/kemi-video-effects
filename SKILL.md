@@ -1,6 +1,6 @@
 ---
 name: effects
-description: Edit talking-head videos: 42 visual effects, house-style captions, sound effects, B-roll, cuts, grading and speed ramps. Add any of 42 video effects to a talking-head video (orbit, spotlight, glass widgets, timeline, checklist, headline wall, comment box, phone fan, liquid glass graph, match-cut, iPhone toggles, LED sign and more). Effects track the speaker's face and can sit behind their head. Use when the user types /effects, names one of the effects, or asks to add an effect, zoom, grade, sticker or animation to their video.
+description: Edit talking-head videos: 100 visual effects, 20 caption styles with cute fonts, sound effects, B-roll, cuts, grading and speed ramps. Effects include orbit, spotlight, glass widgets, headline wall, comment box, neon word, stickers, confetti, polaroid, DM bubbles, notifications, poll, VHS, light leaks and more. Effects track the speaker's face and can sit behind their head. Use when the user types /effects, names one of the effects, or asks to add an effect, zoom, grade, sticker or animation to their video.
 ---
 
 # Effects: 42 video effects (by @kemifrank__)
@@ -38,7 +38,7 @@ Run `bash scripts/setup.sh`. It prints `READY` when done (the first time takes 1
 
 A single effect needs no plan: `.venv/bin/python scripts/fx.py orbit <video> <out.mp4> --start 3 --end 6 --text "..." --opt key=value`.
 
-## The 42 effects
+## The 100 effects
 | # | `fx` name | What it does | Options (all optional) |
 |---|---|---|---|
 | 1 | `noise` | Reels pile up behind your head, one every quarter second | `images` (folder of screenshots or clips), `size` |
@@ -84,6 +84,63 @@ A single effect needs no plan: `.venv/bin/python scripts/fx.py orbit <video> <ou
 | 41 | `led-sign` | The lights drop and a glowing LED sign types itself out behind you | `text` (lines with `\|`), `color`, `push` |
 | 42 | `slow-push` | A slow cinematic push-in to your face while the room melts out of focus | `zoom` (default 1.6), `blur` |
 | 43 | `reel-cloud` | Your reels float around your head (upper ones tucked behind it, two in front) under a two-line headline in black boxes | `text` (2 lines with `\|`), `views` (real counts with `\|`, optional), `size`, `y` |
+| 44 | `stacked-words` | Three words stack up behind your head, each in a different font | `text` (3 words with `\|`), `color` |
+| 45 | `word-rain` | Your word rains down behind you in every size | `text`, `color`, `font` |
+| 46 | `outline-echo` | A giant word with outline echoes pulsing out behind your head | `text`, `color`, `font` |
+| 47 | `neon-word` | A neon tube word flickers on behind your head | `text`, `color`, `font` |
+| 48 | `script-word` | A word writes itself in pretty script behind your head | `text`, `color`, `font` |
+| 49 | `bubble-word` | A squishy bubble-letter word bounces in behind your head | `text`, `color`, `font` |
+| 50 | `sticker-word` | A word slaps on like a sticker beside your face | `text`, `color` (sticker colour), `font` |
+| 51 | `letter-drop` | The letters of a word drop in one by one and bounce | `text`, `color`, `font` |
+| 52 | `marquee` | A scrolling ticker band of your text runs behind you | `text`, `color`, `font` |
+| 53 | `big-number` | A huge number counts up behind your head | `to` (e.g. `100K`, `$5,000`), `label`, `color` |
+| 54 | `quote-card` | A glass quote card with your words slides up under your chin | `text` (the quote), `name`, `font` |
+| 55 | `highlight-words` | Three key words pop up around your head in marker boxes | `text` (3 words with `\|`), `font` |
+| 56 | `side-titles` | Tall magazine titles run up both sides of the frame | `text` (2 words with `\|`), `color` |
+| 57 | `speech-bubble` | A comic speech bubble pops out beside your face | `text`, `font` |
+| 58 | `thought-bubble` | A fluffy thought cloud floats above your head | `text`, `font` |
+| 59 | `arrows-in` | Hand-drawn arrows sketch in from both sides, pointing at you | `text` (optional label), `color` |
+| 60 | `doodle-crown` | A hand-drawn crown sketches itself onto your head | `color` |
+| 61 | `sparkles` | Twinkling sparkles dance around your head | `color` |
+| 62 | `confetti` | A burst of confetti pops and flutters down | none |
+| 63 | `vhs` | A retro VHS look: scanlines, colour bleed and a REC timestamp | none |
+| 64 | `light-leak` | A warm film light leak washes across the frame | `color` |
+| 65 | `film-burn` | An orange film-burn flash, great as a transition | none |
+| 66 | `bw-pop` | The room turns black and white while you stay in full colour | none |
+| 67 | `color-room` | Your background turns one bold colour while you stay natural | `color` |
+| 68 | `bokeh` | Soft glowing bokeh lights drift behind you | none |
+| 69 | `dream-glow` | A soft, dreamy glow with lifted haze | none |
+| 70 | `strobe` | Quick white flashes on the beat | `count` |
+| 71 | `duotone` | The whole frame becomes a two-colour poster look | `color` (light), `dark` |
+| 72 | `portrait-blur` | Portrait mode: the background melts into soft blur | none |
+| 73 | `rgb-glitch` | A digital RGB-split glitch with tearing bands | none |
+| 74 | `shake` | A short handheld camera shake for impact (no zoom) | `amount` |
+| 75 | `flash` | A clean white flash, the classic cut transition | `color` |
+| 76 | `polaroid` | Your shot shrinks into a tilted polaroid photo with a handwritten caption | `text` (caption), `color` (background), `font` |
+| 77 | `phone-frame` | You shrink into a phone screen, like a reel inside a reel | `text` (title above), `color` |
+| 78 | `window-frame` | You appear inside a desktop app window with traffic-light buttons | `text` (window title), `color` |
+| 79 | `film-strip` | Film-strip borders with sprocket holes roll down the sides | none |
+| 80 | `cinema-bars` | Cinema bars slide in with a title, like a movie trailer | `text` (title), `font` |
+| 81 | `grid-split` | Your shot multiplies into a 3x3 grid, then snaps back | `count` (grid size, default 3) |
+| 82 | `notifications` | Phone notifications stack in above your head, one by one | `text` (`title::detail\|...`) |
+| 83 | `dm-bubbles` | Chat bubbles pop in like a DM conversation beside you | `text` (messages with `\|`, alternating sides) |
+| 84 | `search-bar` | A search bar types your question, with suggestions dropping down | `text` (the search) |
+| 85 | `poll` | A poll sticker appears and the votes fill up live | `text` (`question\|option A\|option B`), `to` (percent for A) |
+| 86 | `progress-bar` | A glossy progress bar fills up with a label and percent | `text` (label), `to` (percent), `color` |
+| 87 | `stat-cards` | Three stat cards pop up in a row under your chin | `text` (`value::label\|...`, 3 items), `font` |
+| 88 | `calendar` | A calendar page pops in and a date gets circled | `text` (month), `day` |
+| 89 | `price-tag` | A price tag swings in on a string beside you | `text` (price), `color`, `font` |
+| 90 | `before-after` | A BEFORE / AFTER split with a sliding divider and labels | `text` (2 labels with `\|`), `grade` (the before look) |
+| 91 | `subscribe` | A red Subscribe button gets clicked, then a bell rings | `at` (seconds into the effect when it is clicked), `text` |
+| 92 | `like-burst` | A big heart pops, then little hearts burst and float up | `color` |
+| 93 | `star-rating` | Five stars fill in one after another with a rating | `to` (stars, 1 to 5), `text` (label) |
+| 94 | `timer-ring` | A circular countdown ring ticks down beside you | `from` (seconds), `color` |
+| 95 | `email-pop` | A new email card slides down with a subject line | `text` (`sender::subject`) |
+| 96 | `quiz-card` | A quiz card appears and the right answer lights up green | `text` (`question\|A\|B\|C`), `answer` (1 to 3) |
+| 97 | `money-rain` | Bills and coins rain down behind you | `symbol` (e.g. `₦`) |
+| 98 | `location-pin` | A map pin drops in with the name of a place | `text` (place) |
+| 99 | `now-playing` | A music player card with a moving waveform: now playing | `text` (`song::artist`) |
+| 100 | `sticker-pack` | Cute stickers (heart, star, smiley, "wow") slap on around you one by one | `text` (the word sticker) |
 
 **Named looks** (same effect, a fancier look; they don't add to the count):
 - `glitter-spotlight` = `spotlight` with `look=sparkle`: the room goes dark, golden rays burst from behind your head, a big gold word with a shine sweep, twinkling sparkles and a glow around you. `text` (the word), `color`, `push`.
@@ -92,6 +149,10 @@ A single effect needs no plan: `.venv/bin/python scripts/fx.py orbit <video> <ou
 - `apple-toggles` now sits above you, tucked behind your head, with a gentle zoom (`pos=below` for the old under-the-chin card; `overlap`, `zoom`).
 
 Aliases work too: `bill`, `to-do`, `follow`, `stamp`, `countdown`, `cover`, `rain`, `pause`.
+
+**Font option.** Most effects that draw words take `font`. Cute fonts: `fredoka`, `baloo`, `chewy`, `sniglet`, `cherry`, `gluten`, `grand`, `playpen`; scripts: `pacifico`, `caveat`, `dancing`, `lobster`, `gochi`; bold display: `shrikhand`, `bungee`, `righteous`, `brico`, `anton`; elegant: `dmserif`, `didone`, `serif`.
+
+**Placement.** Words sit behind the head; cards sit under the chin or beside the face and never cover it. On tight framing everything moves to stay inside the frame. Frame effects (`polaroid`, `phone-frame`, `window-frame`, `grid-split`) take over the whole picture, so captions hide while they play.
 
 ## 5. Captions (house style: `editorial`)
 
@@ -109,7 +170,24 @@ The look: lowercase white sans, big, with a soft shadow and no box. The key word
 
 Landscape (16:9 YouTube) is handled automatically. Captions sit in one low line with the yellow serif word inline, over a soft dark fade at the bottom of the frame. They never go behind the head, because a landscape frame has no room above it. The vertical-reel effects in `fx.py` don't fit 16:9 (they overlap the face or get cut off), so for landscape use side cards in the empty space left and right of the speaker instead.
 
-Other styles (only when asked): `word-pop`, `highlight`, `karaoke`, `clean`, `bold-stack`, with `--color`, `--position top/center/bottom`, `--max-words`.
+Other styles (only when the user asks, or names one):
+- `bubbly`: Round white letters with a pink outline, key word in yellow
+- `sticker`: Every word on its own little sticker, key word on yellow
+- `handwritten`: Soft handwriting, key word in pink script
+- `candy`: Chunky pastel 3D letters
+- `neon`: Glowing neon tube letters, key word in hot pink
+- `boxed`: White words on black rounded boxes, key word in yellow
+- `marker`: A yellow highlighter swipes behind the key word
+- `typewriter`: Letters type out one by one with a cursor
+- `luxe`: Elegant serif with a gold script key word
+- `retro`: 70s chunky letters with a brown drop shadow
+- `comic`: Comic-book capitals with a black outline, key word in red
+- `soft-pill`: Friendly words on a soft pastel pill
+- `wavy`: Bouncy letters that gently wave
+- `cherry`: Bubble letters in cherry pink with a white outline
+- Classic: `word-pop`, `highlight`, `karaoke`, `clean`, `bold-stack` (with `--color`, `--position`, `--max-words`).
+
+The new styles run through the same engine as the house style: words appear as spoken, a key word is picked automatically (or with `--emphasis`), `--fx-plan` moves them out of the way of effects, and `--position top/center/bottom` overrides where they sit.
 
 ## 6. Cuts (remove dead space)
 
@@ -173,6 +251,8 @@ Every sound is synthesized by `scripts/sfx.py`, so there's nothing to download a
 - `sfx.py list` shows all 25 sounds. They're also saved as .wav files in `assets/sfx/` for the user to drag into CapCut.
 
 Sounds: whoosh, swoosh, whoosh-long, swipe, pop, bubble, tick, click, ding, chime, cash, impact, thud, stamp, riser, shimmer, typing, shutter, glitch, clunk, buzz, scribble, scratch, heartbeat, sub (low bass bed under a hook).
+
+Plus 12 designed packs in `assets/sfx/packs`, about 70 sounds each: `studio`, `cinematic`, `soft`, `zen`, `rubber` (bouncy, cute), `arcade` (game rewards), `dreamy`, `glass`, `mechanical`, `minimal`, `organic`, `scifi`. Use any as `pack/name`, e.g. `rubber/snap`, `arcade/achievement`, `dreamy/reward`, `studio/notification`. Every one of the 100 effects has a matching sound in `sfx.py auto`. The user prefers moderate sounds: keep typing and whooshes, avoid watery pops unless asked.
 
 ## Full edit order
 1. Cut dead space (`cuts.py`), if wanted.

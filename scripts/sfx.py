@@ -443,9 +443,78 @@ def auto_events(plan):
             add('thud', s + 1.0, 0.6)
         elif fx == 'moody':
             pass
+        elif fx in NEW_FX_SOUNDS:
+            for snd, off, vol in NEW_FX_SOUNDS[fx]:
+                if snd == 'typing': add('typing', s + off, vol, min(1.2, d * 0.5))
+                elif snd == 'ticks':
+                    n = max(1, n_items or 3)
+                    for i in range(n): add('rubber/check', s + 0.15 + i * min(0.5, (d - 0.5) / n), vol)
+                else: add(snd, s + off, vol)
         else:
             add('swoosh', s, 0.6)
     return ev
+
+
+# Sounds for effects 43-100: (sound, seconds after the effect starts, volume). Pack sounds are 'pack/name'.
+NEW_FX_SOUNDS = {
+    'stacked-words': [('rubber/press', 0.0, 0.7), ('rubber/press', 0.12, 0.6), ('rubber/press', 0.24, 0.6)],
+    'word-rain': [('whoosh', 0.0, 0.5)],
+    'outline-echo': [('cinematic/expand', 0.0, 0.6)],
+    'neon-word': [('clunk', 0.0, 0.6), ('buzz', 0.05, 0.4)],
+    'script-word': [('scribble', 0.0, 0.5)],
+    'bubble-word': [('rubber/drop', 0.05, 0.8)],
+    'sticker-word': [('rubber/snap', 0.08, 0.8)],
+    'letter-drop': [('rubber/drop', 0.25, 0.6), ('rubber/drop', 0.45, 0.5)],
+    'marquee': [('swoosh', 0.0, 0.6)],
+    'big-number': [('studio/progress-step', 0.1, 0.5), ('ding', 1.2, 0.5)],
+    'quote-card': [('swipe', 0.0, 0.6)],
+    'highlight-words': [('rubber/press', 0.15, 0.6), ('rubber/press', 0.4, 0.6), ('rubber/press', 0.65, 0.6)],
+    'side-titles': [('whoosh', 0.0, 0.6)],
+    'speech-bubble': [('rubber/receive', 0.0, 0.7)],
+    'thought-bubble': [('dreamy/open', 0.0, 0.6)],
+    'arrows-in': [('scribble', 0.0, 0.5)],
+    'doodle-crown': [('scribble', 0.0, 0.5), ('arcade/reward', 0.6, 0.4)],
+    'sparkles': [('dreamy/reward', 0.0, 0.5)],
+    'confetti': [('arcade/achievement', 0.0, 0.5)],
+    'vhs': [('mechanical/start', 0.0, 0.6)],
+    'light-leak': [('dreamy/expand', 0.0, 0.4)],
+    'film-burn': [('cinematic/swipe', 0.0, 0.7)],
+    'bw-pop': [('cinematic/toggle-off', 0.0, 0.5)],
+    'color-room': [('glass/toggle-on', 0.0, 0.5)],
+    'bokeh': [('dreamy/open', 0.0, 0.4)],
+    'dream-glow': [('dreamy/expand', 0.0, 0.4)],
+    'strobe': [('shutter', 0.0, 0.6)],
+    'duotone': [('glass/toggle-on', 0.0, 0.5)],
+    'portrait-blur': [('cinematic/expand', 0.0, 0.4)],
+    'rgb-glitch': [('glitch', 0.0, 0.5)],
+    'shake': [('thud', 0.0, 0.7)],
+    'flash': [('shutter', 0.0, 0.7)],
+    'polaroid': [('shutter', 0.0, 0.7), ('swoosh', 0.15, 0.4)],
+    'phone-frame': [('swipe', 0.0, 0.6)],
+    'window-frame': [('mechanical/open', 0.0, 0.6)],
+    'film-strip': [('mechanical/start', 0.0, 0.5)],
+    'cinema-bars': [('cinematic/collapse', 0.0, 0.6)],
+    'grid-split': [('glass/expand', 0.0, 0.6), ('glass/collapse', 0.0, 0.0)],
+    'notifications': [('studio/notification', 0.1, 0.5)],
+    'dm-bubbles': [('rubber/send', 0.1, 0.5), ('rubber/receive', 0.6, 0.5), ('rubber/send', 1.1, 0.5)],
+    'search-bar': [('typing', 0.2, 0.5)],
+    'poll': [('rubber/press', 0.0, 0.6), ('studio/progress-step', 0.5, 0.4)],
+    'progress-bar': [('studio/processing', 0.2, 0.4), ('studio/complete', 0.0, 0.0)],
+    'stat-cards': [('rubber/press', 0.1, 0.6), ('rubber/press', 0.28, 0.6), ('rubber/press', 0.46, 0.6)],
+    'calendar': [('swipe', 0.0, 0.6), ('scribble', 0.5, 0.5)],
+    'price-tag': [('cash', 0.3, 0.5)],
+    'before-after': [('cinematic/swipe', 0.2, 0.6)],
+    'subscribe': [('rubber/press', 0.0, 0.5), ('click', 0.9, 0.9), ('studio/notification', 1.25, 0.5)],
+    'like-burst': [('arcade/reward', 0.0, 0.5)],
+    'star-rating': [('arcade/bonus', 0.2, 0.5)],
+    'timer-ring': [('mechanical/processing', 0.0, 0.4)],
+    'email-pop': [('studio/notification', 0.1, 0.5)],
+    'quiz-card': [('rubber/press', 0.0, 0.5), ('studio/success', 0.0, 0.0)],
+    'money-rain': [('cash', 0.1, 0.6)],
+    'location-pin': [('rubber/drop', 0.35, 0.7)],
+    'now-playing': [('studio/play', 0.0, 0.6)],
+    'sticker-pack': [('rubber/snap', 0.1, 0.7), ('rubber/snap', 0.32, 0.6), ('rubber/snap', 0.54, 0.6), ('rubber/snap', 0.76, 0.6)],
+}
 
 
 # ───────── mixing ─────────
@@ -469,7 +538,7 @@ def mix(src, dst, events, level=0.35, style='designed'):
     bus = np.zeros((max(n, len(voice)), 2))
     for ev in sorted(events, key=lambda e: e['at']):
         name = ev['sfx']
-        if style == 'designed' and name in DESIGNED:
+        if style == 'designed' and name in DESIGNED and not is_pack(name):
             name = DESIGNED[name]
             if name is None: continue
         if not is_pack(name) and name not in SOUNDS: print(f"  skip unknown sound '{name}'"); continue

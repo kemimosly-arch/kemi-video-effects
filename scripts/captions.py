@@ -532,6 +532,11 @@ def render_editorial_layer(t, W, H, group, emph, anchor_y, size=None, color=EDIT
 # effects that draw above your head (captions drop to the bottom while they play)
 # and effects that live under your chin (captions keep their spot above your head)
 _BELOW_FX = {'checklist', 'liquid-glass-graph'}
+# effects that sit low on screen (under the chin / bottom): captions go to the top while they play
+_LOW_FX = {'dm-bubbles', 'quote-card', 'poll', 'progress-bar', 'stat-cards', 'calendar', 'subscribe', 'star-rating', 'quiz-card',
+           'now-playing', 'like-burst', 'cinema-bars', 'checklist', 'liquid-glass-graph', 'todo', 'apple-toggles', 'comment-box', 'marquee'}
+# effects that take over the whole frame: no captions over them
+_FULL_FX = {'polaroid', 'phone-frame', 'window-frame', 'grid-split'}
 
 def caption_zones(fx_plan_path, bottom_at):
     zones = []   # (start, end, 'bottom'|'head')
@@ -539,6 +544,10 @@ def caption_zones(fx_plan_path, bottom_at):
         plan = json.load(open(fx_plan_path))
         for e in plan.get('effects', []):
             name = e['fx']
+            if name in _FULL_FX: zones.append((float(e['start']) - 0.1, float(e['end']) + 0.1, 'hide')); continue
+            if name in _LOW_FX:
+                if name in _BELOW_FX or name == 'apple-toggles': continue   # house style already sits above the head
+                zones.append((float(e['start']) - 0.1, float(e['end']) + 0.1, 'top')); continue
             if name in _BELOW_FX and e.get('look') != 'bento': continue
             if name == 'apple-toggles' and e.get('pos') == 'below': continue
             zones.append((float(e['start']) - 0.1, float(e['end']) + 0.1, 'bottom'))
@@ -570,7 +579,7 @@ def run_editorial(a, words):
         '-c:v', 'libx264', '-crf', '17', '-preset', 'medium', '-pix_fmt', 'yuv420p',
         '-c:a', 'aac', '-b:a', '192k', '-shortest', '-movflags', '+faststart', a.output
     ], stdin=subprocess.PIPE)
-    print('Rendering editorial captions...', flush=True)
+    print(f'Rendering {a.style} captions...', flush=True)
     for i, frame in enumerate(read_frames(src, W, H, fps)):
         t = i / fps
         small = cv2.resize(frame, (aw, ah), interpolation=cv2.INTER_AREA)
@@ -592,7 +601,8 @@ def run_editorial(a, words):
             zone = 'head'
             for z0, z1, zn in zones:
                 if z0 <= t <= z1: zone = zn
-            if a.position in ('bottom', 'top', 'center'): zone = a.position
+            if a.position in ('bottom', 'top', 'center') and zone not in ('top', 'hide'): zone = a.position
+            if zone == 'hide': enc.stdin.write(out.tobytes()); continue
             if W > H and zone == 'head': zone = 'bottom'   # landscape: no room above the head
             key = (gi, zone)
             if key not in locked:      # text stays put for the whole phrase
@@ -600,10 +610,11 @@ def run_editorial(a, words):
                     fx_, fy_, fw_ = face_s
                     locked[key] = min(H * 0.6, max(H * 0.17, fy_ - fw_ * 0.98))
                 elif zone == 'head': locked[key] = H * 0.36
-                elif zone == 'top': locked[key] = H * 0.26
+                elif zone == 'top': locked[key] = H * (0.2 if a.style in CS.PRESETS else 0.26)
                 elif zone == 'center': locked[key] = H * 0.5
                 else: locked[key] = H * (0.94 if W > H else 0.9)
-            lay = render_editorial_layer(t, W, H, groups[gi], emph[gi], locked[key], color=color)
+            if a.style in CS.PRESETS: lay = CS.render(t, W, H, groups[gi], emph[gi], locked[key], a.style)
+            else: lay = render_editorial_layer(t, W, H, groups[gi], emph[gi], locked[key], color=color)
             ov = np.asarray(lay, np.float32) / 255; al = ov[..., 3:4]
             if zone == 'head' and not a.no_behind:
                 mk = cv2.resize(m, (W, H), interpolation=cv2.INTER_LINEAR).astype(np.float32) / 255
@@ -616,8 +627,11 @@ def run_editorial(a, words):
     print(f'Done: {a.output}')
 
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import caption_styles as CS
 STYLES = {
     'editorial': None,
+    **{k: None for k in CS.PRESETS},
     'word-pop': render_word_pop,
     'highlight': render_highlight,
     'karaoke': render_karaoke,
@@ -698,8 +712,8 @@ def main():
                 old, new = pair.split('=', 1)
                 for w in words: w['w'] = w['w'].replace(old.strip(), new.strip())
     print(f'Found {len(words)} words.', flush=True)
-    if a.style == 'editorial':
-        if a.position is None: a.position = 'head'
+    if a.style == 'editorial' or a.style in CS.PRESETS:
+        if a.position is None: a.position = CS.PRESETS[a.style]['zone'] if a.style in CS.PRESETS else 'head'
         if a.output.lower().endswith('.srt'):
             _export_srt(a.output, editorial_groups(words)); print(f'Saved {a.output}'); return
         return run_editorial(a, words)
