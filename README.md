@@ -47,7 +47,7 @@ Claude checks a few frames first, fixes anything that covers your face, then ren
 
 You can stack effects in one go: *"Add locked-on from 6 to 10s, then orbit from 10 to 13s, then a reject stamp on 'no'."*
 
-## The 107 effects
+## The 108 effects
 
 | # | Type this | What happens |
 |---|---|---|
@@ -158,6 +158,7 @@ You can stack effects in one go: *"Add locked-on from 6 to 10s, then orbit from 
 | 105 | `clean-zoom` | A smooth, eased zoom into your face that holds, drifts slightly, then eases back out |
 | 106 | `stat-grid` | Editorial: a green card with a big number counting up over a grid that fills in |
 | 107 | `cta-quote` | Editorial: Comment “WORD” in big serif with a small line under it, blurring in |
+| 108 | `side-list` | Wide (16:9) videos: a list builds beside you, one item as you say it |
 
 Bonus looks: `/effects glitter-spotlight` (golden rays and sparkles), `cover-star look=editorial` (a classic magazine cover) and `liquid-glass-graph look=bento` (a glass dashboard around you).
 

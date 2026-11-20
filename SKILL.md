@@ -1,6 +1,6 @@
 ---
 name: effects
-description: Edit talking-head videos: cut fillers and mistakes, auto colour grade, captions, 107 effects, sound effects, B-roll and zooms. Use for /effects or any request to edit a video.
+description: Edit talking-head videos: cut fillers and mistakes, auto colour grade, captions, 108 effects, sound effects, B-roll and zooms. Use for /effects or any request to edit a video.
 ---
 
 # Effects: 107 video effects, captions, clean cuts and grading (by @kemifrank__)
@@ -38,7 +38,7 @@ Run `bash scripts/setup.sh`. It prints `READY` when done (the first time takes 1
 
 A single effect needs no plan: `.venv/bin/python scripts/fx.py orbit <video> <out.mp4> --start 3 --end 6 --text "..." --opt key=value`.
 
-## The 107 effects
+## The 108 effects
 | # | `fx` name | What it does | Options (all optional) |
 |---|---|---|---|
 | 1 | `noise` | Reels pile up behind your head, one every quarter second | `images` (folder of screenshots or clips), `size` |
@@ -148,6 +148,7 @@ A single effect needs no plan: `.venv/bin/python scripts/fx.py orbit <video> <ou
 | 105 | `clean-zoom` | A smooth, eased zoom into your face that holds, drifts slightly, then eases back out | `zoom` (default 1.28), `ease` (seconds, default 0.45; 0 = instant cut-zoom), `out` (`false` to stay zoomed) |
 | 106 | `stat-grid` | Editorial: a green card with a big number counting up over a grid that fills in | `to`, `text` (line above, markup), `theme` |
 | 107 | `cta-quote` | Editorial: Comment “WORD” in big serif with a small line under it, blurring in | `text` (the keyword), `sub`, `times`, `y` |
+| 108 | `side-list` | **Wide (16:9) videos:** a list builds beside you, one item as you say it (tools, steps, names) | `items` (a\|b\|c), `item_times` (seconds after start, a\|b\|c), `title`, `look` (glass, cream, chat), `side` (auto, left, right), `numbers` (yes/no), `size` |
 
 **Named looks** (same effect, a fancier look; they don't add to the count):
 - `glitter-spotlight` = `spotlight` with `look=sparkle`: the room goes dark, golden rays burst from behind your head, a big gold word with a shine sweep, twinkling sparkles and a glow around you. `text` (the word), `color`, `push`.
@@ -188,7 +189,7 @@ The look: lowercase white sans, big, with a soft shadow and no box. The key word
    - `--fix "ChargeGPT=ChatGPT"` is a quick word fix without editing the JSON. `--no-behind` keeps the words in front of the head.
 3. Check a few frames: no word should vanish behind the head, and nothing should be cut off at the top.
 
-Landscape (16:9 YouTube) is handled automatically. Captions sit in one low line with the yellow serif word inline, over a soft dark fade at the bottom of the frame. They never go behind the head, because a landscape frame has no room above it. The vertical-reel effects in `fx.py` don't fit 16:9 (they overlap the face or get cut off), so for landscape use side cards in the empty space left and right of the speaker instead.
+Landscape (16:9 YouTube) is handled automatically. For wide videos, use effects that live beside or behind the speaker: `side-list`, `backdrop-word`, `search-bar` (with `suggest=none`), `clean-zoom`. Captions sit in one low line with the yellow serif word inline, over a soft dark fade at the bottom of the frame. They never go behind the head, because a landscape frame has no room above it. The vertical-reel effects in `fx.py` don't fit 16:9 (they overlap the face or get cut off), so for landscape use side cards in the empty space left and right of the speaker instead.
 
 **Placement rules (automatic):**
 - Reels and TikTok safe zone: text stays above the bottom 20% (the username and caption area), below the top 10%, and inside 80% of the width, clear of the like/comment buttons.

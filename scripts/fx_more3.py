@@ -53,7 +53,8 @@ def fx_dm_bubbles(c, e):
 
 @effect('search-bar', 'a search bar types your question, with suggestions dropping down')
 def fx_search_bar(c, e):
-    q = e.o.get('text', 'how to grow on instagram'); w = c.W * 0.86; h = c.W * 0.14
+    q = e.o.get('text', 'how to grow on instagram')
+    w = c.W * 0.86 if c.W <= c.H else c.W * 0.5; h = w * 0.163      # 16:9: a compact bar over the top
     n = int(len(q) * clamp((c.lt - 0.2) / max(0.4, e.d * 0.45)))
     k = ease_out(c.lt / 0.3); cy = fity(c, c.H * 0.08, h)
     g = ui_card(w, h, h / 2, (255, 255, 255, 250)); d = ImageDraw.Draw(g)
@@ -63,10 +64,11 @@ def fx_search_bar(c, e):
     place(c, shadowed(g, 16, 8, 100), c.W / 2, cy, 0.9 + 0.1 * k, 0, k * fade(c, e))
     if n >= len(q):
         done_t = 0.2 + max(0.4, e.d * 0.45)
-        for j, sug in enumerate(['for beginners', 'in 2026']):
+        sugs = [x for x in str(e.o.get('suggest', 'for beginners|in 2026')).split('|') if x and x != 'none']
+        for j, sug in enumerate(sugs):
             kk = ease_out((c.lt - done_t - 0.1 - 0.12 * j) / 0.25)
             if kk <= 0: continue
-            s = ui_card(w * 0.92, h * 0.72, h * 0.2, (255, 255, 255, 230)); ImageDraw.Draw(s).text((h * 0.5, h * 0.36), q + ' ' + sug, font=font('ui', h * 0.24), fill=(90, 90, 100, 255), anchor='lm')
+            s = ui_card(w * 0.92, h * 0.72, h * 0.2, (255, 255, 255, 230)); ImageDraw.Draw(s).text((h * 0.5, h * 0.36), sug if sug.startswith('=') is False and e.o.get('suggest') else q + ' ' + sug, font=font('ui', h * 0.24), fill=(90, 90, 100, 255), anchor='lm')
             place(c, s, c.W / 2, cy + h * 0.95 + j * h * 0.8, 1, 0, kk * fade(c, e))
 
 
