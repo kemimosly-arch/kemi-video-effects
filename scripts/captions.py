@@ -536,7 +536,7 @@ _BELOW_FX = {'checklist', 'liquid-glass-graph'}
 _LOW_FX = {'dm-bubbles', 'quote-card', 'poll', 'progress-bar', 'stat-cards', 'calendar', 'subscribe', 'star-rating', 'quiz-card',
            'now-playing', 'like-burst', 'cinema-bars', 'checklist', 'liquid-glass-graph', 'todo', 'apple-toggles', 'comment-box', 'marquee'}
 # effects that take over the whole frame: no captions over them
-_FULL_FX = {'polaroid', 'phone-frame', 'window-frame', 'grid-split'}
+_FULL_FX = {'polaroid', 'phone-frame', 'window-frame', 'grid-split', 'text-card', 'split-card', 'stat-grid', 'cta-quote', 'serif-words'}
 
 def caption_zones(fx_plan_path, bottom_at):
     zones = []   # (start, end, 'bottom'|'head')
@@ -601,7 +601,7 @@ def run_editorial(a, words):
             zone = 'head'
             for z0, z1, zn in zones:
                 if z0 <= t <= z1: zone = zn
-            if a.position in ('bottom', 'top', 'center') and zone not in ('top', 'hide'): zone = a.position
+            if a.position in ('bottom', 'top', 'center', 'mid') and zone not in ('top', 'hide'): zone = a.position
             if zone == 'hide': enc.stdin.write(out.tobytes()); continue
             if W > H and zone == 'head': zone = 'bottom'   # landscape: no room above the head
             key = (gi, zone)
@@ -612,6 +612,7 @@ def run_editorial(a, words):
                 elif zone == 'head': locked[key] = H * 0.36
                 elif zone == 'top': locked[key] = H * (0.2 if a.style in CS.PRESETS else 0.26)
                 elif zone == 'center': locked[key] = H * 0.5
+                elif zone == 'mid': locked[key] = min(H * 0.84, max(H * 0.55, face_s[1] + face_s[2] * 1.55)) if face_s is not None else H * 0.62
                 else: locked[key] = H * (0.94 if W > H else 0.9)
             if a.style in CS.PRESETS: lay = CS.render(t, W, H, groups[gi], emph[gi], locked[key], a.style)
             else: lay = render_editorial_layer(t, W, H, groups[gi], emph[gi], locked[key], color=color)
@@ -674,7 +675,7 @@ def main():
                     help='Caption style (default: editorial, the house style)')
     ap.add_argument('--color', default='purple', help='Accent color: name or hex (default: purple)')
     ap.add_argument('--font', default='bold', help='Font: bold, anton, mono, hand, ui (default: bold)')
-    ap.add_argument('--position', default=None, choices=['head', 'top', 'center', 'bottom'],
+    ap.add_argument('--position', default=None, choices=['head', 'top', 'center', 'mid', 'bottom'],
                     help='Where to place captions (editorial default: above your head; others: bottom)')
     ap.add_argument('--words', help='Use a words JSON from words.py (fix any misheard words in it first)')
     ap.add_argument('--fix', help='Fix misheard words, e.g. "ChargeGPT=ChatGPT,serve=save"')

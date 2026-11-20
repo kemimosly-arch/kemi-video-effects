@@ -513,6 +513,13 @@ NEW_FX_SOUNDS = {
     'money-rain': [('cash', 0.1, 0.6)],
     'location-pin': [('rubber/drop', 0.35, 0.7)],
     'now-playing': [('studio/play', 0.0, 0.6)],
+    'clean-zoom': [('whoosh', -0.12, 0.7)],
+    'text-card': [('swoosh', -0.05, 0.5)],
+    'split-card': [('swoosh', -0.05, 0.5)],
+    'dual-frame': [('swoosh', -0.05, 0.45)],
+    'stat-grid': [('swoosh', -0.05, 0.5), ('studio/progress-step', 0.25, 0.35)],
+    'serif-words': [],
+    'cta-quote': [('soft/press', 0.1, 0.4)],
     'sticker-pack': [('rubber/snap', 0.1, 0.7), ('rubber/snap', 0.32, 0.6), ('rubber/snap', 0.54, 0.6), ('rubber/snap', 0.76, 0.6)],
 }
 

@@ -1,6 +1,6 @@
 ---
 name: effects
-description: Edit talking-head videos: 100 visual effects, 20 caption styles with cute fonts, sound effects, B-roll, cuts, grading and speed ramps. Effects include orbit, spotlight, glass widgets, headline wall, comment box, neon word, stickers, confetti, polaroid, DM bubbles, notifications, poll, VHS, light leaks and more. Effects track the speaker's face and can sit behind their head. Use when the user types /effects, names one of the effects, or asks to add an effect, zoom, grade, sticker or animation to their video.
+description: Edit talking-head videos: 107 visual effects, 21 caption styles (including a cream-and-green editorial look) with cute fonts, sound effects, B-roll, cuts, grading and speed ramps. Effects include orbit, spotlight, glass widgets, headline wall, comment box, neon word, stickers, confetti, polaroid, DM bubbles, notifications, poll, VHS, light leaks and more. Effects track the speaker's face and can sit behind their head. Use when the user types /effects, names one of the effects, or asks to add an effect, zoom, grade, sticker or animation to their video.
 ---
 
 # Effects: 42 video effects (by @kemifrank__)
@@ -38,7 +38,7 @@ Run `bash scripts/setup.sh`. It prints `READY` when done (the first time takes 1
 
 A single effect needs no plan: `.venv/bin/python scripts/fx.py orbit <video> <out.mp4> --start 3 --end 6 --text "..." --opt key=value`.
 
-## The 100 effects
+## The 107 effects
 | # | `fx` name | What it does | Options (all optional) |
 |---|---|---|---|
 | 1 | `noise` | Reels pile up behind your head, one every quarter second | `images` (folder of screenshots or clips), `size` |
@@ -141,6 +141,13 @@ A single effect needs no plan: `.venv/bin/python scripts/fx.py orbit <video> <ou
 | 98 | `location-pin` | A map pin drops in with the name of a place | `text` (place) |
 | 99 | `now-playing` | A music player card with a moving waveform: now playing | `text` (`song::artist`) |
 | 100 | `sticker-pack` | Cute stickers (heart, star, smiley, "wow") slap on around you one by one | `text` (the word sticker) |
+| 101 | `text-card` | Editorial: a full-screen cream or green card where serif words blur in as you speak | `text` (markup below), `theme` (`cream`, `green`), `times` (word times in seconds into the effect, with `\|`), `y` |
+| 102 | `serif-words` | Editorial: serif words blur in over your video, just below your chin | `text` (markup), `times`, `y`, `color` |
+| 103 | `split-card` | Editorial: a card on top with a title and list pills, your video slides into a rounded frame below | `text` (title, markup), `items` (pills with `\|`), `item_times`, `theme` |
+| 104 | `dual-frame` | Editorial: a close-up of you on top and the wide shot below, like two cameras | `zoom` (default 1.35) |
+| 105 | `clean-zoom` | A smooth, eased zoom into your face that holds, drifts slightly, then eases back out | `zoom` (default 1.28), `ease` (seconds, default 0.45; 0 = instant cut-zoom), `out` (`false` to stay zoomed) |
+| 106 | `stat-grid` | Editorial: a green card with a big number counting up over a grid that fills in | `to`, `text` (line above, markup), `theme` |
+| 107 | `cta-quote` | Editorial: Comment “WORD” in big serif with a small line under it, blurring in | `text` (the keyword), `sub`, `times`, `y` |
 
 **Named looks** (same effect, a fancier look; they don't add to the count):
 - `glitter-spotlight` = `spotlight` with `look=sparkle`: the room goes dark, golden rays burst from behind your head, a big gold word with a shine sweep, twinkling sparkles and a glow around you. `text` (the word), `color`, `push`.
@@ -153,6 +160,19 @@ Aliases work too: `bill`, `to-do`, `follow`, `stamp`, `countdown`, `cover`, `rai
 **Font option.** Most effects that draw words take `font`. Cute fonts: `fredoka`, `baloo`, `chewy`, `sniglet`, `cherry`, `gluten`, `grand`, `playpen`; scripts: `pacifico`, `caveat`, `dancing`, `lobster`, `gochi`; bold display: `shrikhand`, `bungee`, `righteous`, `brico`, `anton`; elegant: `dmserif`, `didone`, `serif`.
 
 **Placement.** Words sit behind the head; cards sit under the chin or beside the face and never cover it. On tight framing everything moves to stay inside the frame. Frame effects (`polaroid`, `phone-frame`, `window-frame`, `grid-split`) take over the whole picture, so captions hide while they play.
+
+## The editorial look (cream + forest green)
+
+Use this when the user asks for the "editorial", "cream and green", "aesthetic", "serif" or "clean" style, or shares a reel like that. Use only the user's own footage.
+
+- Captions: `--style serif-mid`. Serif words blur in just below the chin; the key word turns big italic.
+- Every 6 to 10 seconds, cut to a `text-card` (alternate `theme` `green` and `cream`) for the key line of the script. Use `times` from words.py so each word lands as it is spoken.
+- Lists ("three things", "the steps") go in a `split-card` with `items`, timed with `item_times`.
+- Numbers go in `stat-grid`. The final call to action goes in `cta-quote`.
+- Zooms: `clean-zoom` (1.2 to 1.35) on strong lines, held for 2 to 4 seconds; `dual-frame` once or twice for variety. No shakes, no flashes, no stickers in this look.
+- Sounds: only soft whooshes and swooshes (the `sfx.py auto` defaults for these effects).
+
+Text markup for these effects: `*word*` or `*several words*` = italic accent, `**WORD**` = big bold, `|` = new line.
 
 ## 5. Captions (house style: `editorial`)
 

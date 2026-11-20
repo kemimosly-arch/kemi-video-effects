@@ -39,6 +39,8 @@ PRESETS = {
                         fill=(60, 40, 70), kfill=(220, 70, 140), pill=(255, 236, 246), treat='pill', anim='rise', case='lower', zone='bottom', size=0.85),
     'wavy':        dict(desc='Bouncy letters that gently wave', base='Gluten.ttf', key='Gluten.ttf',
                         fill=(255, 255, 255), kfill=(150, 230, 120), outline=(40, 30, 60), treat='outline', anim='wave', case='lower', zone='head'),
+    'serif-mid':   dict(desc='Editorial: elegant serif words blur in at chest height, key word in big italic', base='DmSerifDisplay.ttf', key='PlayfairDisplay-Italic.ttf',
+                        fill=(250, 246, 228), kfill=(250, 246, 228), treat='shadow', anim='blur', case='keep', zone='mid', size=0.82),
     'cherry':      dict(desc='Bubble letters in cherry pink with a white outline', base='CherryBombOne.ttf', key='CherryBombOne.ttf',
                         fill=(255, 90, 140), kfill=(255, 255, 255), outline=(255, 255, 255), koutline=(255, 90, 140), treat='outline', anim='pop', case='lower', zone='head'),
 }
@@ -108,6 +110,7 @@ def word_img(text, p, key, S):
 def _case(s, p):
     s = s.strip(' ,;:"“”')
     if p['case'] == 'upper': return s.upper()
+    if p['case'] == 'keep': return s
     core = s.strip('.!?')
     return s if (len(core) >= 2 and core.isupper() and core.isalpha()) else s.lower()
 
@@ -178,6 +181,7 @@ def render(t, W, H, group, emph, anchor_y, style):
             elif anim == 'flicker':
                 al = 1.0 if lt > 0.3 else (0.25 if int(lt * 30) % 3 == 1 else 1.0) * clamp(lt / 0.05)
             elif anim == 'type': al = 1.0
+            elif anim == 'blur': k = ease_out(lt / 0.35); dy = (1 - k) * S * 0.15; al = k
             # the marker swipe sits behind the key word
             if p['treat'] == 'marker' and it['key']:
                 k = ease_out(lt / 0.3)
@@ -192,6 +196,7 @@ def render(t, W, H, group, emph, anchor_y, style):
                 py = base_y - base_off * sc + dy
             else:
                 im2 = im; px = x - pad; py = base_y - base_off + dy
+            if anim == 'blur' and lt < 0.34: im2 = im2.filter(ImageFilter.GaussianBlur(S * 0.14 * (1 - ease_out(lt / 0.35))))
             if al < 1.0:
                 a = im2.split()[3].point(lambda v, al=al: int(v * al)); im2 = im2.copy(); im2.putalpha(a)
             lay.alpha_composite(im2, (int(px), int(py)))

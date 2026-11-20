@@ -1,6 +1,6 @@
 # Video Effects & Editing Toolkit for Claude
 
-100 visual effects + 20 caption styles + 18 cute fonts + sound effects + dead-space cutting + B-roll insertion + color grading + speed ramps. Drop your video into Claude and tell it what you want.
+107 visual effects + 21 caption styles + 18 cute fonts + sound effects + dead-space cutting + B-roll insertion + color grading + speed ramps. Drop your video into Claude and tell it what you want.
 
 Made by [@kemifrank__](https://instagram.com/kemifrank__) 💜
 
@@ -39,7 +39,7 @@ Claude checks a few frames first, fixes anything that covers your face, then ren
 
 You can stack effects in one go: *"Add locked-on from 6 to 10s, then orbit from 10 to 13s, then a reject stamp on 'no'."*
 
-## The 100 effects
+## The 107 effects
 
 | # | Type this | What happens |
 |---|---|---|
@@ -143,6 +143,13 @@ You can stack effects in one go: *"Add locked-on from 6 to 10s, then orbit from 
 | 98 | `location-pin` | A map pin drops in with the name of a place |
 | 99 | `now-playing` | A music player card with a moving waveform: now playing |
 | 100 | `sticker-pack` | Cute stickers (heart, star, smiley, "wow") slap on around you one by one |
+| 101 | `text-card` | Editorial: a full-screen cream or green card where serif words blur in as you speak |
+| 102 | `serif-words` | Editorial: serif words blur in over your video, just below your chin |
+| 103 | `split-card` | Editorial: a card on top with a title and list pills, your video slides into a rounded frame below |
+| 104 | `dual-frame` | Editorial: a close-up of you on top and the wide shot below, like two cameras |
+| 105 | `clean-zoom` | A smooth, eased zoom into your face that holds, drifts slightly, then eases back out |
+| 106 | `stat-grid` | Editorial: a green card with a big number counting up over a grid that fills in |
+| 107 | `cta-quote` | Editorial: Comment “WORD” in big serif with a small line under it, blurring in |
 
 Bonus looks: `/effects glitter-spotlight` (golden rays and sparkles), `cover-star look=editorial` (a classic magazine cover) and `liquid-glass-graph look=bento` (a glass dashboard around you).
 
