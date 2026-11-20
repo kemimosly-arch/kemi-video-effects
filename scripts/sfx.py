@@ -329,7 +329,7 @@ PACKS = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Designed sounds (CC0, from the uisfx project) for every synthesized cue: softer and more polished.
 # 'studio' = tactile, warm restraint; 'cinematic' = deeper, for transitions and big moments.
 DESIGNED = {
-    'whoosh': 'cinematic/swipe', 'swoosh': 'studio/swipe', 'whoosh-long': 'cinematic/expand', 'swipe': 'studio/swipe',
+    'swoosh': 'studio/swipe', 'swipe': 'studio/swipe',
     'pop': 'studio/press', 'bubble': 'soft/press', 'tick': 'studio/check', 'click': 'studio/select',
     'ding': 'studio/success', 'chime': 'studio/notification', 'cash': 'studio/purchase', 'impact': 'cinematic/snap',
     'thud': 'cinematic/press', 'stamp': 'cinematic/snap', 'riser': 'studio/progress-step', 'shimmer': 'studio/reward',
