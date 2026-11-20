@@ -1,6 +1,6 @@
 ---
 name: effects
-description: Edit talking-head videos: 107 visual effects, 21 caption styles (including a cream-and-green editorial look) with cute fonts, sound effects, B-roll, cuts, grading and speed ramps. Effects include orbit, spotlight, glass widgets, headline wall, comment box, neon word, stickers, confetti, polaroid, DM bubbles, notifications, poll, VHS, light leaks and more. Effects track the speaker's face and can sit behind their head. Use when the user types /effects, names one of the effects, or asks to add an effect, zoom, grade, sticker or animation to their video.
+description: Edit talking-head videos: clean cuts (removes um, uh, stutters, mistakes and retakes), auto colour grade, 107 visual effects, 21 caption styles (including a cream-and-green editorial look) with cute fonts, sound effects, B-roll, cuts, grading and speed ramps. Effects include orbit, spotlight, glass widgets, headline wall, comment box, neon word, stickers, confetti, polaroid, DM bubbles, notifications, poll, VHS, light leaks and more. Effects track the speaker's face and can sit behind their head. Use when the user types /effects, names one of the effects, or asks to add an effect, zoom, grade, sticker or animation to their video, or to cut fillers, mistakes or pauses.
 ---
 
 # Effects: 42 video effects (by @kemifrank__)
@@ -190,6 +190,12 @@ The look: lowercase white sans, big, with a soft shadow and no box. The key word
 
 Landscape (16:9 YouTube) is handled automatically. Captions sit in one low line with the yellow serif word inline, over a soft dark fade at the bottom of the frame. They never go behind the head, because a landscape frame has no room above it. The vertical-reel effects in `fx.py` don't fit 16:9 (they overlap the face or get cut off), so for landscape use side cards in the empty space left and right of the speaker instead.
 
+**Placement rules (automatic):**
+- Reels and TikTok safe zone: text stays above the bottom 20% (the username and caption area), below the top 10%, and inside 80% of the width, clear of the like/comment buttons.
+- Positions are sticky: a caption reuses the last spot unless the face really moved, so text doesn't jump between phrases.
+- Lines are balanced, so a single word is never left alone on a line.
+- If the face fills the top of the frame (a close-up), the caption moves below the chin instead of being squashed at the top.
+
 Other styles (only when the user asks, or names one):
 - `bubbly`: Round white letters with a pink outline, key word in yellow
 - `sticker`: Every word on its own little sticker, key word on yellow
@@ -208,6 +214,21 @@ Other styles (only when the user asks, or names one):
 - Classic: `word-pop`, `highlight`, `karaoke`, `clean`, `bold-stack` (with `--color`, `--position`, `--max-words`).
 
 The new styles run through the same engine as the house style: words appear as spoken, a key word is picked automatically (or with `--emphasis`), `--fx-plan` moves them out of the way of effects, and `--position top/center/bottom` overrides where they sit.
+
+## 6a. Clean cut (fillers, mistakes, retakes): do this FIRST on any raw recording
+
+`.venv/bin/python scripts/clean.py <video> <clean.mp4>` removes um/uh/er/hmm, stutters ("I I think"), cut-off words, false starts and retakes (it keeps the LAST take, the one you got right), plus untranscribed noises between words, and tightens pauses.
+
+It writes three files:
+- `<clean>.mp4`: the clean video.
+- `<clean>.words.json`: word timings already remapped to the cut. Pass it straight to `captions.py --words`, so there's no need to run words.py again.
+- `<clean>.review.txt`: every cut with its reason, plus the clean script.
+
+1. Run with `--dry-run` first and read the review list out to the user (cuts + `CHECK` lines). `CHECK` means a word lasts suspiciously long and may hide a repeat. Watch that spot.
+2. Adjust: `--keep 12-14` undoes a cut (word numbers come from the review list); `--cut 40-44` forces one. `--aggressive` also removes "you know", "I mean", "basically", "literally", "kind of". `--max-gap 0.3` sets the longest pause kept. `--no-retakes` keeps every take.
+3. Render without `--dry-run`.
+
+How it works: speech is split at pauses and each chunk is transcribed on its own, verbatim. Normal Whisper hides mistakes by merging a false start and its retake into one tidy sentence. Verified on a spliced test (false start + stutter, both caught) and on a clean 2-minute talk (0 good words cut).
 
 ## 6. Cuts (remove dead space)
 
@@ -234,9 +255,20 @@ For multiple B-rolls, use `--plan broll.json` with a JSON array of insertions.
 
 Supports video and image B-roll sources (images repeat as static, videos loop if shorter).
 
-## 8. Color Grading (12 presets)
+## 8. Color Grading (auto + 12 looks)
 
-Run `.venv/bin/python scripts/grade.py <preset> <video> <output.mp4>`.
+**Default: `auto`.** `.venv/bin/python scripts/grade.py auto <video> <graded.mp4>` measures the whole clip once and fixes:
+- white balance, from neutral pixels only, so skin never pulls it cool;
+- black and white levels;
+- exposure, with a highlight roll-off so foreheads and lamps never blow out;
+- skin-safe vibrance;
+- a gentle contrast curve.
+
+The same correction is applied to every frame, so there's no flicker. It prints what it measured.
+
+Add a look on top: `grade.py auto in.mp4 out.mp4 --look warm --look-strength 0.5` (any preset below). Always correct first, then style; never put a look on uncorrected footage.
+
+Or a look alone: `.venv/bin/python scripts/grade.py <preset> <video> <output.mp4>`.
 
 Presets: `moody`, `warm`, `cool`, `film`, `pop`, `bw`, `vintage`, `cinematic`, `sunset`, `editorial`, `neon`, `pastel`.
 
@@ -275,13 +307,13 @@ Sounds: whoosh, swoosh, whoosh-long, swipe, pop, bubble, tick, click, ding, chim
 Plus 12 designed packs in `assets/sfx/packs`, about 70 sounds each: `studio`, `cinematic`, `soft`, `zen`, `rubber` (bouncy, cute), `arcade` (game rewards), `dreamy`, `glass`, `mechanical`, `minimal`, `organic`, `scifi`. Use any as `pack/name`, e.g. `rubber/snap`, `arcade/achievement`, `dreamy/reward`, `studio/notification`. Every one of the 100 effects has a matching sound in `sfx.py auto`. The user prefers moderate sounds: keep typing and whooshes, avoid watery pops unless asked.
 
 ## Full edit order
-1. Cut dead space (`cuts.py`), if wanted.
-2. Run `words.py` and fix the words.
+1. Clean cut (`clean.py`): fillers, mistakes, retakes, pauses. Show the review list.
+2. Fix any misheard words in `<clean>.words.json` (no need for words.py).
 3. Effects (`fx.py`).
 4. B-roll, zooms, text hook.
-5. Captions (`captions.py`, editorial).
-6. Sound effects (`sfx.py`) last, because it only remixes the audio.
-7. Grade (`grade.py`), if wanted, before captions so the text stays clean.
+5. Grade (`grade.py auto`, plus `--look` if wanted). Do this before captions so the text colours stay true.
+6. Captions (`captions.py --words <clean>.words.json`).
+7. Sound effects (`sfx.py`) last, because it only remixes the audio.
 
 ## Rules
 - Never cover the face. Everything either goes behind the person or avoids the face by itself; if a check frame still shows text over the face, move it (`x`, `y`) or shorten the text.

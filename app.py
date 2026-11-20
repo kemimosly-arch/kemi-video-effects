@@ -52,14 +52,14 @@ DEFAULT_FX = ['backdrop-word', 'reel-cloud', 'red-collage', 'checklist', 'liquid
 LANGS = {'English': 'en', 'French': 'fr', 'Spanish': 'es', 'Portuguese': 'pt', 'German': 'de', 'Detect automatically': 'auto'}
 
 
-def run_edit(video, cut, n_fx, fx_list, zooms, grade, captions, sfx, clean_audio, fixes, lang):
+def run_edit(video, clean, cut, n_fx, fx_list, zooms, grade, captions, sfx, clean_audio, fixes, lang):
     if not video:
         raise gr.Error('Upload a video first.')
     dur, w, h = P.probe(video)
     if dur > MAX_SECONDS + 1:
         raise gr.Error(f'This version edits videos up to {MAX_SECONDS} seconds. Yours is {dur:.0f}s: trim it and try again.')
     work = tempfile.mkdtemp(prefix='edit_')
-    opts = dict(cut_pauses=cut, n_effects=int(n_fx), effects=fx_list or DEFAULT_FX, zooms=zooms, grade=grade,
+    opts = dict(clean=clean, cut_pauses=cut, n_effects=int(n_fx), effects=fx_list or DEFAULT_FX, zooms=zooms, grade=grade,
                 captions=captions, sfx=sfx, clean_audio=clean_audio, fixes=fixes, lang=LANGS.get(lang, 'en'))
     q, result = queue.Queue(), {}
     lines = []
@@ -103,12 +103,15 @@ with gr.Blocks(title='Reel Editor') as demo:
                 captions = gr.Dropdown(CAPTION_CHOICES, value='House style (lowercase + yellow serif)', label='Captions')
                 n_fx = gr.Slider(0, 8, value=4, step=1, label='How many effects')
                 sfx = gr.Radio(['Off', 'Subtle', 'Balanced', 'Punchy'], value='Balanced', label='Sound effects')
+                clean = gr.Radio(['Off', 'Fillers + mistakes', 'Strict (also "you know", "I mean")'],
+                                 value='Fillers + mistakes', label='Clean cut: remove um/uh, stutters, false starts and retakes (keeps your last take)')
                 cut = gr.Radio(['Off', 'Light', 'Medium', 'Tight'], value='Light', label='Cut pauses')
             with gr.Accordion('More options', open=False):
                 fx_list = gr.CheckboxGroup(EFFECT_CHOICES, value=DEFAULT_FX, label='Effects to choose from')
                 zooms = gr.Checkbox(value=False, label='Add quick zoom-ins on strong words')
-                grade = gr.Dropdown(['None', 'Warm', 'Film', 'Cinematic', 'Moody', 'Editorial', 'Sunset', 'Pastel', 'Pop', 'BW'],
-                                    value='None', label='Colour grade')
+                grade = gr.Dropdown(['Auto (fix colour + light)', 'Auto + Warm', 'Auto + Film', 'Auto + Editorial', 'Auto + Cinematic',
+                                     'Auto + Pastel', 'None', 'Warm', 'Film', 'Cinematic', 'Moody', 'Editorial', 'Sunset', 'Pastel', 'Pop', 'BW'],
+                                    value='Auto (fix colour + light)', label='Colour grade')
                 clean_audio = gr.Checkbox(value=True, label='Clean up and level the audio')
                 lang = gr.Dropdown(list(LANGS), value='English', label='Language spoken in the video')
                 fixes = gr.Textbox(label='Fix misheard words (optional)', placeholder='ChargeGPT=ChatGPT, Cloud=Claude')
@@ -118,7 +121,7 @@ with gr.Blocks(title='Reel Editor') as demo:
             out = gr.Video(label='Edited reel', interactive=False, elem_classes='card')
             summary = gr.Markdown()
             status = gr.Textbox(label='Progress', lines=9, max_lines=16, interactive=False, elem_id='status')
-    go.click(run_edit, [video, cut, n_fx, fx_list, zooms, grade, captions, sfx, clean_audio, fixes, lang], [status, out, summary])
+    go.click(run_edit, [video, clean, cut, n_fx, fx_list, zooms, grade, captions, sfx, clean_audio, fixes, lang], [status, out, summary])
 
 if __name__ == '__main__':
     demo.queue(default_concurrency_limit=1, max_size=20).launch(

@@ -176,6 +176,8 @@ The default `editorial` style: big lowercase white text sits just above your hea
 - `--fix "ChargeGPT=ChatGPT"` fixes misheard words.
 - `--fx-plan plan.json` moves the captions out of the way of your effects.
 
+**Placement that never looks messy:** captions stay inside the Reels/TikTok safe zone (clear of the username, caption and side buttons), hold the same position from phrase to phrase, wrap into balanced lines with no lonely last word, and move below your chin on close-ups.
+
 **19 more caption styles:** `bubbly`, `sticker`, `handwritten`, `candy`, `neon`, `boxed`, `marker`, `typewriter`, `luxe`, `retro`, `comic`, `soft-pill`, `wavy`, `cherry`, plus the classic `word-pop`, `highlight`, `karaoke`, `clean`, `bold-stack`. Example: `--style bubbly`.
 
 ---
@@ -193,6 +195,20 @@ python scripts/sfx.py list                                             # see the
 `whoosh` · `swoosh` · `whoosh-long` · `swipe` · `pop` · `bubble` · `tick` · `click` · `ding` · `chime` · `cash` · `impact` · `thud` · `stamp` · `riser` · `shimmer` · `typing` · `shutter` · `glitch` · `clunk` · `buzz` · `scribble` · `scratch` · `heartbeat` · `sub`
 
 All of them are also in `assets/sfx/` as .wav files, ready to drag into CapCut.
+
+---
+
+## Clean Cut: fillers, mistakes and retakes
+
+Record like a human, post like a pro. One command cuts every um, uh, stutter, false start and retake, and keeps the last take, the one you got right.
+
+```
+python scripts/clean.py video.mp4 clean.mp4 --dry-run     # see what it will cut
+python scripts/clean.py video.mp4 clean.mp4               # cut it
+python scripts/clean.py video.mp4 clean.mp4 --aggressive  # also "you know", "I mean", "basically"
+```
+
+You get the clean video, a `clean.review.txt` listing every cut with its reason, and `clean.words.json` (timings already matched to the cut, ready for captions). Changed your mind? `--keep 12-14` puts words back; `--cut 40-44` removes more.
 
 ---
 
@@ -233,9 +249,16 @@ Supports video and image B-roll. Use `--plan broll.json` for multiple insertions
 
 ---
 
-## Color Grading (12 Presets)
+## Color Grading (Auto + 12 Looks)
 
-Apply a color grade to your whole video with one command.
+**Auto** fixes your footage first: white balance (skin-safe), exposure, levels, highlight protection and gentle colour. There's no flicker, because it measures the whole clip once.
+
+```
+python scripts/grade.py auto video.mp4 graded.mp4
+python scripts/grade.py auto video.mp4 graded.mp4 --look warm --look-strength 0.5
+```
+
+Or apply a look on its own:
 
 ```
 python scripts/grade.py cinematic video.mp4 graded.mp4 --strength 0.8 --grain 0.02
@@ -273,7 +296,7 @@ Use `--plan speed.json` for multiple speed ramps in one render.
 
 ## The web app
 
-`app.py` is a simple web app around this toolkit. You upload a talking video, choose captions, effects, sound effects, pause cutting and a colour grade, and download the edited reel.
+`app.py` is a simple web app around this toolkit. You upload a talking video and it cuts your fillers and mistakes, auto-corrects the colour, adds captions in safe positions, effects and sound effects, then you download the edited reel. Every step can be switched off or changed.
 
 **Run it on your computer:** run `bash scripts/setup.sh` once, then `.venv/bin/python app.py`, and open http://localhost:7860.
 

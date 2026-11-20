@@ -115,10 +115,29 @@ def _case(s, p):
     return s if (len(core) >= 2 and core.isupper() and core.isalpha()) else s.lower()
 
 
+def balance(items, n, sp, maxw):
+    """Same number of lines, but even widths: no single orphan word on the last line."""
+    if n < 2 or n > 3 or len(items) < n: return None
+    wid = lambda its: sum(it['w'] for it in its) + sp * max(0, len(its) - 1)
+    best, cuts = None, []
+    L = len(items)
+    if n == 2: cuts = [(c,) for c in range(1, L)]
+    else: cuts = [(a, b) for a in range(1, L - 1) for b in range(a + 1, L)]
+    for c in cuts:
+        bounds = (0,) + c + (L,)
+        parts = [items[bounds[k]:bounds[k + 1]] for k in range(n)]
+        ws = [wid(pp) for pp in parts]
+        if max(ws) > maxw: continue
+        # prefer even lines; lightly prefer a top line that is not longer than the next (pyramid reads better)
+        score = max(ws) - min(ws) + (0.15 * (ws[0] - ws[1]) if ws[0] > ws[1] else 0)
+        if best is None or score < best[0]: best = (score, parts)
+    return best[1] if best else None
+
+
 def layout(group, emph, W, H, p):
     land = W > H
     S = int((H * 0.072 if land else W * 0.09) * p.get('size', 1.0))
-    maxw = W * (0.7 if land else 0.86)
+    maxw = W * (0.7 if land else 0.8)      # 0.8: clear of the Reels/TikTok side buttons
     while True:
         items = []
         for i, w in enumerate(group):
@@ -135,6 +154,7 @@ def layout(group, emph, W, H, p):
             if cur and cw + sp + it['w'] > maxw: lines.append(cur); cur, cw = [], 0
             cw += (sp if cur else 0) + it['w']; cur.append(it)
         if cur: lines.append(cur)
+        lines = balance(items, len(lines), sp, maxw) or lines
         if len(lines) <= 3 or S < 30: return lines, S, sp
         S = int(S * 0.9)
 
@@ -144,7 +164,7 @@ def render(t, W, H, group, emph, anchor_y, style):
     p = PRESETS[style]
     lines, S, sp = layout(group, emph, W, H, p)
     lh = [max(it['asc'] for it in ln) + max(it['desc'] for it in ln) * 0.55 + S * 0.12 for ln in lines]
-    top = max(H * 0.04, anchor_y - sum(lh))
+    top = max(H * (0.04 if W > H else 0.1), anchor_y - sum(lh))   # 0.1: below the app's top bar
     lay = Image.new('RGBA', (W, H), (0, 0, 0, 0)); dl = ImageDraw.Draw(lay)
     y = top
     for ln, h in zip(lines, lh):

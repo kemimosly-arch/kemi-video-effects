@@ -1,6 +1,6 @@
 """The editing pipeline behind the app: one function per step, each calling the repo's own scripts.
 
-Order: cut pauses -> transcribe -> plan effects -> effects -> colour grade -> captions -> sound effects -> clean audio.
+Order: clean cuts (fillers, mistakes, retakes) or cut pauses -> transcribe -> plan effects -> effects -> colour grade -> captions -> sound effects -> clean audio.
 """
 import json, os, re, shutil, subprocess, sys, urllib.request
 
@@ -82,6 +82,25 @@ def cut_pauses(src, dst, strength, log):
     run([PY, '-I', os.path.join(SCRIPTS, 'cuts.py'), 'cut-silence', src, dst, '--threshold', '-32',
          '--min-silence', str(gap), '--padding', '0.1'], log)
     if not os.path.exists(dst): shutil.copy(src, dst)
+
+
+def clean_cuts(src, dst, mode, gap, log, lang='en'):
+    """Cut fillers, stutters, false starts and retakes; returns the remapped words.json path."""
+    os.environ['WHISPER_LANG'] = lang
+    cmd = [PY, '-I', os.path.join(SCRIPTS, 'clean.py'), src, dst, '--max-gap', str(gap)]
+    if mode.startswith('Strict'): cmd.append('--aggressive')
+    run(cmd, log)
+    if not os.path.exists(dst): shutil.copy(src, dst); return None
+    return os.path.splitext(dst)[0] + '.words.json'
+
+
+def apply_fixes(path, fixes):
+    words = json.load(open(path))
+    for pair in [p for p in (fixes or '').split(',') if '=' in p]:
+        old, new = [x.strip() for x in pair.split('=', 1)]
+        for w in words: w['w'] = re.sub(re.escape(old), new, w['w'], flags=re.I)
+    json.dump(words, open(path, 'w'))
+    return path, words
 
 
 def transcribe(src, log, fixes='', lang='en'):
@@ -283,14 +302,30 @@ def edit(src, work, opts, log):
     dur, w, h = probe(cur)
     summary = []
 
-    if opts['cut_pauses'] != 'Off':
+    words_path = None
+    mode = opts.get('clean', 'Off')
+    if mode != 'Off':
+        log('Cutting fillers, stutters and mistakes (keeping your last clean take)...')
+        nxt = os.path.join(work, 'v1_clean.mp4')
+        gap = {'Off': 0.6, 'Light': 0.5, 'Medium': 0.38, 'Tight': 0.28}[opts['cut_pauses']]
+        words_path = clean_cuts(cur, nxt, mode, gap, log, opts.get('lang', 'en'))
+        d2, _, _ = probe(nxt); summary.append(f'Clean cut: removed {dur - d2:.1f}s of fillers, mistakes and pauses ({dur:.1f}s → {d2:.1f}s)')
+        rv = os.path.splitext(nxt)[0] + '.review.txt'
+        if os.path.exists(rv):
+            cuts = [l.strip() for l in open(rv) if l.strip().startswith(('CUT', 'CHECK'))]
+            summary += ['  ' + c for c in cuts[:12]]
+        cur, dur = nxt, d2
+    elif opts['cut_pauses'] != 'Off':
         log('Cutting pauses...'); nxt = os.path.join(work, 'v1_cut.mp4')
         cut_pauses(cur, nxt, opts['cut_pauses'], log)
         d2, _, _ = probe(nxt); summary.append(f'Cut {dur - d2:.1f}s of pauses ({dur:.1f}s → {d2:.1f}s)')
         cur, dur = nxt, d2
 
     log('Listening to what you say...')
-    words_path, words = transcribe(cur, log, opts.get('fixes', ''), opts.get('lang', 'en'))
+    if words_path and os.path.exists(words_path):
+        words_path, words = apply_fixes(words_path, opts.get('fixes', ''))
+    else:
+        words_path, words = transcribe(cur, log, opts.get('fixes', ''), opts.get('lang', 'en'))
     if not words: raise RuntimeError('No speech found in this video. The editor needs someone talking.')
 
     plan_path = os.path.join(work, 'plan.json')
@@ -309,7 +344,13 @@ def edit(src, work, opts, log):
 
     if opts['grade'] != 'None':
         log(f"Colour grading ({opts['grade']})..."); nxt = os.path.join(work, 'v3_grade.mp4')
-        run([PY, '-I', os.path.join(SCRIPTS, 'grade.py'), opts['grade'].lower(), cur, nxt, '--strength', '0.75'], log)
+        g = opts['grade']
+        if g.startswith('Auto'):
+            cmd = [PY, '-I', os.path.join(SCRIPTS, 'grade.py'), 'auto', cur, nxt]
+            if '+' in g: cmd += ['--look', g.split('+')[1].strip().lower(), '--look-strength', '0.5']
+        else:
+            cmd = [PY, '-I', os.path.join(SCRIPTS, 'grade.py'), g.lower(), cur, nxt, '--strength', '0.75']
+        run(cmd, log)
         cur = nxt; summary.append(f"Colour grade: {opts['grade']}")
 
     if opts['captions'] != 'Off':

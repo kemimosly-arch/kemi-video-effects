@@ -298,7 +298,7 @@ def render_clean(t, W, H, words, groups, accent, font_kind, position):
 
     size = int(W * 0.05)
     f = _font(font_kind, size)
-    y = int(H * 0.88) if position == 'bottom' else (int(H * 0.08) if position == 'top' else int(H * 0.45))
+    y = int(H * (0.9 if W > H else 0.76)) if position == 'bottom' else (int(H * 0.11) if position == 'top' else int(H * 0.45))
 
     sentence = ' '.join(w['w'] for w in active_group)
     lw = int(f.getlength(sentence))
@@ -445,7 +445,7 @@ def editorial_layout(group, emph, W, size=None, H=None):
     words = [w['w'].strip().strip('“”"') for w in group]
     words = [w.rstrip(',;:') for w in words]
     land = H is not None and W > H        # 16:9 YouTube: lower-third band, narrower lines
-    MW = W * (0.7 if land else 0.88)
+    MW = W * (0.7 if land else 0.82)      # clear of the Reels/TikTok side buttons
     S = size or int(H * 0.078 if land else W * 0.118)
     while True:
         fs, fz = _sans(S), _font('serif', S * 1.5)
@@ -494,7 +494,7 @@ def render_editorial_layer(t, W, H, group, emph, anchor_y, size=None, color=EDIT
     fs, fz = _sans(S), _font('serif', S * 1.5)
     heights = [S * 1.02 if k == 'sans' else (S * 1.42 if k == 'mixed' else S * 1.32) for k, _ in lines]
     fzm = _font('serif', S * 1.35)
-    y = max(H * 0.04, anchor_y - sum(heights))   # never off the top of the frame
+    y = max(H * (0.04 if W > H else 0.1), anchor_y - sum(heights))   # never under the app's top bar
     im = Image.new('RGBA', (W, H), (0, 0, 0, 0)); d = ImageDraw.Draw(im)
     for (kind, toks), lh in zip(lines, heights):
         f = fs if kind == 'sans' else fz
@@ -606,14 +606,21 @@ def run_editorial(a, words):
             if W > H and zone == 'head': zone = 'bottom'   # landscape: no room above the head
             key = (gi, zone)
             if key not in locked:      # text stays put for the whole phrase
+                SAFE = H * (0.94 if W > H else 0.8)   # Reels/TikTok: username + caption cover the bottom ~20%
                 if zone == 'head' and face_s is not None:
                     fx_, fy_, fw_ = face_s
-                    locked[key] = min(H * 0.6, max(H * 0.17, fy_ - fw_ * 0.98))
-                elif zone == 'head': locked[key] = H * 0.36
-                elif zone == 'top': locked[key] = H * (0.2 if a.style in CS.PRESETS else 0.26)
-                elif zone == 'center': locked[key] = H * 0.5
-                elif zone == 'mid': locked[key] = min(H * 0.84, max(H * 0.55, face_s[1] + face_s[2] * 1.55)) if face_s is not None else H * 0.62
-                else: locked[key] = H * (0.94 if W > H else 0.9)
+                    want = min(H * 0.6, max(H * 0.17, fy_ - fw_ * 0.98))
+                    if fy_ - fw_ * 0.98 < H * 0.22:    # face fills the top: no room above it, go below the chin
+                        want = min(SAFE, max(H * 0.62, fy_ + fw_ * 1.6))
+                elif zone == 'head': want = H * 0.36
+                elif zone == 'top': want = H * (0.2 if a.style in CS.PRESETS else 0.26)
+                elif zone == 'center': want = H * 0.5
+                elif zone == 'mid': want = min(SAFE, max(H * 0.55, face_s[1] + face_s[2] * 1.55)) if face_s is not None else H * 0.62
+                else: want = SAFE
+                # sticky: reuse the last spot in this zone unless the face really moved, so captions don't jump
+                prev = locked.get(('last', zone))
+                if prev is not None and abs(prev - want) < H * 0.06: want = prev
+                locked[key] = locked[('last', zone)] = want
             if a.style in CS.PRESETS: lay = CS.render(t, W, H, groups[gi], emph[gi], locked[key], a.style)
             else: lay = render_editorial_layer(t, W, H, groups[gi], emph[gi], locked[key], color=color)
             ov = np.asarray(lay, np.float32) / 255; al = ov[..., 3:4]

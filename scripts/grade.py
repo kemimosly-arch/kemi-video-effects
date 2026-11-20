@@ -181,7 +181,68 @@ def grade_pastel(img, strength=1.0):
     return img * (1 - strength) + o * strength
 
 
+# ---------------------------------------------------------------- auto correction
+def analyze(src, W, H, fps, samples=14):
+    """Measure the clip once (white balance, levels, exposure, saturation) so the
+    correction is identical on every frame - no flicker."""
+    fps_, dur, _, _ = probe(src)
+    px = []
+    for k in range(samples):
+        t = dur * (k + 0.5) / samples
+        raw = subprocess.run(['ffmpeg', '-v', 'error', '-ss', f'{t:.2f}', '-i', src, '-frames:v', '1',
+                              '-vf', 'scale=240:-2', '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-'],
+                             capture_output=True).stdout
+        if raw:
+            px.append(np.frombuffer(raw, np.uint8).reshape(-1, 3))
+    p = np.concatenate(px).astype(np.float32) / 255.0
+    lum = p @ np.array([0.2126, 0.7152, 0.0722], np.float32)
+    mx, mn = p.max(1), p.min(1)
+    sat = (mx - mn) / (mx + 1e-6)
+    # white balance from near-neutral pixels only (skin is not grey, so it is excluded)
+    neutral = (sat < 0.14) & (lum > 0.15) & (lum < 0.92)
+    if neutral.mean() > 0.02:
+        m = p[neutral].mean(0)
+        gains = np.clip(m.mean() / (m + 1e-6), 0.9, 1.1)
+        gains = 1 + (gains - 1) * 0.7                      # gentle: 70% of the way
+    else:
+        gains = np.ones(3, np.float32)
+    lum_b = (p * gains) @ np.array([0.2126, 0.7152, 0.0722], np.float32)
+    black = float(np.clip(np.percentile(lum_b, 0.5), 0, 0.12))
+    white = float(np.clip(np.percentile(lum_b, 99.6), 0.9, 1.0))
+    mid = (np.median(lum_b) - black) / (white - black + 1e-6)
+    gamma = float(np.clip(np.log(0.47) / np.log(np.clip(mid, 0.05, 0.95)), 0.85, 1.15))
+    s_mean = float(sat[lum > 0.1].mean())
+    sat_boost = float(np.clip(0.33 / (s_mean + 1e-6), 0.95, 1.22))
+    return dict(gains=gains.astype(np.float32), black=black, white=white, gamma=gamma, sat=sat_boost,
+                report=f'white balance R{gains[0]:.2f} G{gains[1]:.2f} B{gains[2]:.2f} | levels {black:.2f}-{white:.2f} '
+                       f'| exposure gamma {gamma:.2f} | saturation x{sat_boost:.2f}')
+
+
+def grade_auto(img, P, strength=1.0):
+    src = img
+    img = img * P['gains']
+    img = np.clip((img - P['black']) / (P['white'] - P['black'] + 1e-6), 0, 1)
+    img = img ** (1.0 / P['gamma'])
+    # highlight roll-off: never blow out foreheads / bright walls
+    k = 0.82
+    img = np.where(img > k, k + (1 - k) * np.tanh((img - k) / (1 - k)), img)
+    # soft S-curve for a little depth
+    img = img * 0.8 + (img * img * (3 - 2 * img)) * 0.2
+    # vibrance: lift dull colours more than vivid ones, go easy on skin tones
+    lum = _lum(img)
+    lum = lum[..., None] if lum.ndim == 2 else lum
+    mx, mn = img.max(2, keepdims=True), img.min(2, keepdims=True)
+    sat = (mx - mn) / (mx + 1e-6)
+    r, g, b = img[..., :1], img[..., 1:2], img[..., 2:]
+    skin = ((r > g) & (g > b) & (r - b > 0.06)).astype(np.float32)
+    amt = (P['sat'] - 1) * (1 - sat) * (1 - 0.6 * skin)
+    img = lum + (img - lum) * (1 + amt)
+    img = np.clip(img, 0, 1)
+    return src + (img - src) * strength
+
+
 GRADES = {
+    'auto': ('Fix it first: white balance, exposure, levels, skin-safe colour (add --look for a style)', None),
     'moody': ('Desaturated, teal shadows, warm highlights', grade_moody),
     'warm': ('Golden warm tones, cozy feel', grade_warm),
     'cool': ('Blue-tinted, clean and modern', grade_cool),
@@ -233,6 +294,8 @@ def main():
     ap.add_argument('--vignette', type=float, default=0, help='Vignette strength (default: 0, try 0.3)')
     ap.add_argument('--letterbox', type=float, default=0, help='Letterbox aspect ratio (e.g., 2.35 for cinemascope)')
     ap.add_argument('--width', type=int, default=1080, help='Output width (default: 1080)')
+    ap.add_argument('--look', help='with auto: a style to add on top of the correction, e.g. warm, film, editorial')
+    ap.add_argument('--look-strength', type=float, default=0.5, help='how strong the --look is (default 0.5)')
     ap.add_argument('--list', action='store_true', help='List all available grades')
     a = ap.parse_args()
 
@@ -258,6 +321,15 @@ def main():
         W = a.width; H = int(round(a.width * sh / sw / 2)) * 2
     else:
         H = a.width; W = int(round(a.width * sw / sh / 2)) * 2
+    look = None
+    if a.grade == 'auto':
+        P = analyze(a.input, W, H, fps)
+        print('  measured: ' + P['report'], flush=True)
+        grade_fn = lambda im, st: grade_auto(im, P, st)
+        if a.look:
+            if a.look not in GRADES or a.look == 'auto':
+                print(f"Unknown look '{a.look}'."); return
+            look = GRADES[a.look][1]
 
     enc = subprocess.Popen([
         'ffmpeg', '-v', 'error', '-y',
@@ -273,6 +345,8 @@ def main():
 
         # Apply grade
         img = grade_fn(img, a.strength)
+        if look is not None:
+            img = look(np.clip(img, 0, 1), a.look_strength)
 
         # Optional: grain
         if a.grain > 0:

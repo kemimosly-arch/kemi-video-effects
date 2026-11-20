@@ -349,8 +349,10 @@ def fx_lean_in(c, e):
 def fx_backdrop_word(c, e):
     word = e.o.get('text', 'AI')
     im = cached(e, 'w', lambda: fit_text(word, c.W * 0.94, e.o.get('font', 'bold'), fill=rgb(e.o.get('color'), CREAM), shadow=10))
+    if im.height > c.H * 0.4:          # wide (16:9) frames: keep the word fully in shot
+        im = cached(e, 'w2', lambda: im.resize((int(im.width * c.H * 0.4 / im.height), int(c.H * 0.4)), Image.LANCZOS))
     k = ease_back(c.lt / 0.42)
-    y_end = c.fy - c.fw * 1.05
+    y_end = max(c.H * 0.03 + im.height / 2, c.fy - c.fw * 1.05)   # place() takes the centre
     y = -im.height + (y_end + im.height) * k
     place(c, im, c.W / 2 * 0.6 + c.fx * 0.4, y, alpha=clamp((e.d - c.lt) / 0.2), behind=True)
 
